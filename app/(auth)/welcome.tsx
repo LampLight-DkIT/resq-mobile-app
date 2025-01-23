@@ -41,21 +41,6 @@ const WelcomeScreen: React.FC = () => {
             Connect with emergency services discreetly and share critical
             information instantly.
           </Text>
-
-          {/* Font test section */}
-          <View style={styles.fontTest}>
-            {testFonts.map((font, index) => (
-              <Text
-                key={index}
-                style={[
-                  styles.fontTestText,
-                  { fontFamily: font.family, color: isDark ? "#fff" : "#000" },
-                ]}
-              >
-                {font.name}: The quick brown fox
-              </Text>
-            ))}
-          </View>
         </View>
 
         <View style={styles.buttonContainer}>

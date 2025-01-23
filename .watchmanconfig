@@ -1,0 +1,5 @@
+{
+    "root_files": [".git"],
+    "ignore_dirs": ["node_modules", "build"]
+  }
+  

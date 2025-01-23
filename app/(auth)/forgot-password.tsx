@@ -1,6 +1,7 @@
 // app/(auth)/forgot-password.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
+  Image,
   View,
   Text,
   StyleSheet,
@@ -12,31 +13,31 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from '@/hooks/useColorScheme';
+} from "react-native";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const [email, setEmail] = useState('');
+  const isDark = colorScheme === "dark";
+  const [email, setEmail] = useState("");
 
   const handleResetPassword = () => {
-    if (email.trim() === '') {
-      Alert.alert('Error', 'Please enter your email address');
+    if (email.trim() === "") {
+      Alert.alert("Error", "Please enter your email address");
       return;
     }
-    
-    console.log('Reset password for:', email);
+
+    console.log("Reset password for:", email);
     Alert.alert(
-      'Check Your Email',
-      'If an account exists for this email, you will receive password reset instructions.',
+      "Check Your Email",
+      "If an account exists for this email, you will receive password reset instructions.",
       [
         {
-          text: 'OK',
-          onPress: () => router.push('/(auth)/login'),
+          text: "OK",
+          onPress: () => router.push("/(auth)/login"),
         },
       ]
     );
@@ -44,21 +45,30 @@ export default function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView
           style={[
             styles.container,
-            { backgroundColor: isDark ? '#2C3E50' : '#f5f5f5' },
-          ]}>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
+            { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+          ]}
+        >
+          <StatusBar style={isDark ? "light" : "dark"} />
           <View style={styles.mainContainer}>
             <View style={styles.headerContainer}>
-              <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>
+              <Image
+                source={require("@/assets/images/logo/resq-color.png")} // Adjust the path to your image
+                style={styles.logoImage}
+                resizeMode='cover'
+              />
+              <Text style={[styles.title, { color: isDark ? "#fff" : "#000" }]}>
                 Reset Password
               </Text>
-              <Text style={[styles.subtitle, { color: isDark ? '#ccc' : '#666' }]}>
+              <Text
+                style={[styles.subtitle, { color: isDark ? "#ccc" : "#666" }]}
+              >
                 Enter your email address to receive password reset instructions
               </Text>
             </View>
@@ -67,19 +77,19 @@ export default function ForgotPasswordScreen() {
               <TextInput
                 style={[
                   styles.input,
-                  { 
-                    backgroundColor: isDark ? '#34495E' : '#fff',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: isDark ? '#455d7a' : '#ddd'
+                  {
+                    backgroundColor: isDark ? "#34495E" : "#fff",
+                    color: isDark ? "#fff" : "#000",
+                    borderColor: isDark ? "#455d7a" : "#ddd",
                   },
                 ]}
-                placeholder="Email"
-                placeholderTextColor={isDark ? '#95a5a6' : '#999'}
+                placeholder='Email'
+                placeholderTextColor={isDark ? "#95a5a6" : "#999"}
                 value={email}
                 onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
+                keyboardType='email-address'
+                autoCapitalize='none'
+                autoComplete='email'
               />
             </View>
 
@@ -87,14 +97,21 @@ export default function ForgotPasswordScreen() {
               <TouchableOpacity
                 style={styles.button}
                 onPress={handleResetPassword}
-                activeOpacity={0.8}>
+                activeOpacity={0.8}
+              >
                 <Text style={styles.buttonText}>Send Reset Link</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.backButton}
-                onPress={() => router.back()}>
-                <Text style={[styles.backButtonText, { color: isDark ? '#ccc' : '#666' }]}>
+                onPress={() => router.back()}
+              >
+                <Text
+                  style={[
+                    styles.backButtonText,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
                   Back to Login
                 </Text>
               </TouchableOpacity>
@@ -114,51 +131,57 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 24,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   headerContainer: {
     marginTop: 40,
     marginBottom: 20,
   },
   formContainer: {
-    width: '100%',
+    width: "100%",
     marginVertical: 20,
+  },
+  logoImage: {
+    width: 230,
+    height: 85,
+    marginBottom: 20,
+    alignSelf: "center",
   },
   title: {
     fontSize: 32,
-    fontFamily: 'TtNormsProMedium',
+    fontFamily: "TtNormsProMedium",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 18,
-    fontFamily: 'TtNormsProRegular',
-    textAlign: 'center',
+    fontFamily: "TtNormsProRegular",
+    textAlign: "center",
     marginBottom: 10,
     paddingHorizontal: 20,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
     borderWidth: 1,
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
     fontSize: 16,
-    fontFamily: 'TtNormsProRegular',
+    fontFamily: "TtNormsProRegular",
   },
   buttonContainer: {
-    width: '100%',
-    marginTop: 'auto',
+    width: "100%",
+    marginTop: "auto",
     paddingTop: 20,
   },
   button: {
-    width: '100%',
-    backgroundColor: '#007bff',
+    width: "100%",
+    backgroundColor: "#007bff",
     paddingVertical: 16,
     borderRadius: 12,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -167,10 +190,10 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   buttonText: {
-    color: '#fff',
-    fontFamily: 'TtNormsProMedium',
+    color: "#fff",
+    fontFamily: "TtNormsProMedium",
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
   },
   backButton: {
     marginTop: 20,
@@ -178,7 +201,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    fontFamily: 'TtNormsProRegular',
-    textAlign: 'center',
-  }
+    fontFamily: "TtNormsProRegular",
+    textAlign: "center",
+  },
 });

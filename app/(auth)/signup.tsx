@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
+  Image,
   View,
   Text,
   StyleSheet,
@@ -11,70 +12,70 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from '@/hooks/useColorScheme';
+} from "react-native";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 const SignupScreen = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  
+  const isDark = colorScheme === "dark";
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const validateForm = () => {
     let isValid = true;
     const newErrors = {
-      fullName: '',
-      email: '',
-      password: '',
-      confirmPassword: ''
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
     };
 
     // Validate full name
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+      newErrors.fullName = "Full name is required";
       isValid = false;
     }
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
       isValid = false;
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
       isValid = false;
     }
 
     // Validate password
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
       isValid = false;
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
       isValid = false;
     }
 
     // Validate confirm password
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = "Please confirm your password";
       isValid = false;
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
       isValid = false;
     }
 
@@ -89,35 +90,44 @@ const SignupScreen = () => {
 
     try {
       // Add your signup API call here
-      console.log('Signing up with:', formData);
-      
+      console.log("Signing up with:", formData);
+
       // If signup is successful, navigate to verification screen
-      router.push('/(auth)/verify');
+      router.push("/(auth)/verify");
     } catch (error) {
       Alert.alert(
-        'Signup Failed',
-        'An error occurred during signup. Please try again.'
+        "Signup Failed",
+        "An error occurred during signup. Please try again."
       );
     }
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView
           style={[
             styles.container,
-            { backgroundColor: isDark ? '#2C3E50' : '#f5f5f5' },
-          ]}>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
+            { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+          ]}
+        >
+          <StatusBar style={isDark ? "light" : "dark"} />
           <View style={styles.mainContainer}>
             <View style={styles.headerContainer}>
-              <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>
+              <Image
+                source={require("@/assets/images/logo/resq-color.png")} // Adjust the path to your image
+                style={styles.logoImage}
+                resizeMode='cover'
+              />
+              <Text style={[styles.title, { color: isDark ? "#fff" : "#000" }]}>
                 Create Account
               </Text>
-              <Text style={[styles.subtitle, { color: isDark ? '#ccc' : '#666' }]}>
+              <Text
+                style={[styles.subtitle, { color: isDark ? "#ccc" : "#666" }]}
+              >
                 Sign up to get started
               </Text>
             </View>
@@ -127,17 +137,23 @@ const SignupScreen = () => {
                 <TextInput
                   style={[
                     styles.input,
-                    { 
-                      backgroundColor: isDark ? '#34495E' : '#fff',
-                      color: isDark ? '#fff' : '#000',
-                      borderColor: errors.fullName ? '#ff4444' : (isDark ? '#455d7a' : '#ddd')
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: errors.fullName
+                        ? "#ff4444"
+                        : isDark
+                        ? "#455d7a"
+                        : "#ddd",
                     },
                   ]}
-                  placeholder="Full Name"
-                  placeholderTextColor={isDark ? '#95a5a6' : '#999'}
+                  placeholder='Full Name'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
                   value={formData.fullName}
-                  onChangeText={(text) => setFormData({ ...formData, fullName: text })}
-                  autoCapitalize="words"
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, fullName: text })
+                  }
+                  autoCapitalize='words'
                 />
                 {errors.fullName ? (
                   <Text style={styles.errorText}>{errors.fullName}</Text>
@@ -148,19 +164,25 @@ const SignupScreen = () => {
                 <TextInput
                   style={[
                     styles.input,
-                    { 
-                      backgroundColor: isDark ? '#34495E' : '#fff',
-                      color: isDark ? '#fff' : '#000',
-                      borderColor: errors.email ? '#ff4444' : (isDark ? '#455d7a' : '#ddd')
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: errors.email
+                        ? "#ff4444"
+                        : isDark
+                        ? "#455d7a"
+                        : "#ddd",
                     },
                   ]}
-                  placeholder="Email"
-                  placeholderTextColor={isDark ? '#95a5a6' : '#999'}
+                  placeholder='Email'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
                   value={formData.email}
-                  onChangeText={(text) => setFormData({ ...formData, email: text })}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, email: text })
+                  }
+                  keyboardType='email-address'
+                  autoCapitalize='none'
+                  autoComplete='email'
                 />
                 {errors.email ? (
                   <Text style={styles.errorText}>{errors.email}</Text>
@@ -171,16 +193,22 @@ const SignupScreen = () => {
                 <TextInput
                   style={[
                     styles.input,
-                    { 
-                      backgroundColor: isDark ? '#34495E' : '#fff',
-                      color: isDark ? '#fff' : '#000',
-                      borderColor: errors.password ? '#ff4444' : (isDark ? '#455d7a' : '#ddd')
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: errors.password
+                        ? "#ff4444"
+                        : isDark
+                        ? "#455d7a"
+                        : "#ddd",
                     },
                   ]}
-                  placeholder="Password"
-                  placeholderTextColor={isDark ? '#95a5a6' : '#999'}
+                  placeholder='Password'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
                   value={formData.password}
-                  onChangeText={(text) => setFormData({ ...formData, password: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, password: text })
+                  }
                   secureTextEntry
                 />
                 {errors.password ? (
@@ -192,16 +220,22 @@ const SignupScreen = () => {
                 <TextInput
                   style={[
                     styles.input,
-                    { 
-                      backgroundColor: isDark ? '#34495E' : '#fff',
-                      color: isDark ? '#fff' : '#000',
-                      borderColor: errors.confirmPassword ? '#ff4444' : (isDark ? '#455d7a' : '#ddd')
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: errors.confirmPassword
+                        ? "#ff4444"
+                        : isDark
+                        ? "#455d7a"
+                        : "#ddd",
                     },
                   ]}
-                  placeholder="Confirm Password"
-                  placeholderTextColor={isDark ? '#95a5a6' : '#999'}
+                  placeholder='Confirm Password'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
                   value={formData.confirmPassword}
-                  onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, confirmPassword: text })
+                  }
                   secureTextEntry
                 />
                 {errors.confirmPassword ? (
@@ -214,15 +248,21 @@ const SignupScreen = () => {
               <TouchableOpacity
                 style={styles.button}
                 onPress={handleSignup}
-                activeOpacity={0.8}>
+                activeOpacity={0.8}
+              >
                 <Text style={styles.buttonText}>Sign Up</Text>
               </TouchableOpacity>
 
               <View style={styles.loginContainer}>
-                <Text style={[styles.loginText, { color: isDark ? '#ccc' : '#666' }]}>
+                <Text
+                  style={[
+                    styles.loginText,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
                   Already have an account?
                 </Text>
-                <TouchableOpacity onPress={() => router.push('/(auth)/login')} >
+                <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
                   <Text style={styles.loginLink}>Sign In</Text>
                 </TouchableOpacity>
               </View>
@@ -242,59 +282,65 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 24,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   headerContainer: {
     marginTop: 40,
     marginBottom: 20,
   },
+  logoImage: {
+    width: 230,
+    height: 85,
+    marginBottom: 20,
+    alignSelf: "center",
+  },
   title: {
     fontSize: 32,
-    fontFamily: 'TtNormsProMedium',
+    fontFamily: "TtNormsProMedium",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 18,
-    fontFamily: 'TtNormsProRegular',
-    textAlign: 'center',
+    fontFamily: "TtNormsProRegular",
+    textAlign: "center",
     marginBottom: 10,
   },
   formContainer: {
-    width: '100%',
+    width: "100%",
     marginVertical: 20,
   },
   inputGroup: {
     marginBottom: 16,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    fontFamily: 'TtNormsProRegular',
+    fontFamily: "TtNormsProRegular",
   },
   errorText: {
-    color: '#ff4444',
+    color: "#ff4444",
     fontSize: 12,
-    fontFamily: 'TtNormsProRegular',
+    fontFamily: "TtNormsProRegular",
     marginTop: 4,
     marginLeft: 4,
   },
   buttonContainer: {
-    width: '100%',
-    marginTop: 'auto',
+    width: "100%",
+    marginTop: "auto",
     paddingTop: 20,
   },
   button: {
-    width: '100%',
-    backgroundColor: '#007bff',
+    width: "100%",
+    backgroundColor: "#007bff",
     paddingVertical: 16,
     borderRadius: 12,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -303,26 +349,26 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   buttonText: {
-    color: '#fff',
-    fontFamily: 'TtNormsProMedium',
+    color: "#fff",
+    fontFamily: "TtNormsProMedium",
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
   },
   loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 20,
   },
   loginText: {
     fontSize: 16,
-    fontFamily: 'TtNormsProRegular',
+    fontFamily: "TtNormsProRegular",
     marginRight: 5,
   },
   loginLink: {
     fontSize: 16,
-    fontFamily: 'TtNormsProMedium',
-    color: '#007bff',
+    fontFamily: "TtNormsProMedium",
+    color: "#007bff",
   },
 });
 

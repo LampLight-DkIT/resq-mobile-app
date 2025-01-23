@@ -39,24 +39,6 @@
     },
     "assetBundlePatterns": [
       "**/*"
-    ],
-    "fonts": [
-      {
-        "name": "TtNormsProNormal",
-        "asset": "./assets/fonts/TT Norms Pro Light.otf"
-      },
-      {
-        "name": "TtNormsProRegular",
-        "asset": "./assets/fonts/TT Norms Pro Regular.otf"
-      },
-      {
-        "name": "TtNormsProMedium",
-        "asset": "./assets/fonts/TT Norms Pro Medium.otf"
-      },
-      {
-        "name": "TtNormsProMediumItalic",
-        "asset": "./assets/fonts/TT Norms Pro Medium Italic.otf"
-      }
     ]
   }
 }

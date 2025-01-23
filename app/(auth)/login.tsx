@@ -12,10 +12,12 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  ImageBackground,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { SvgUri } from "react-native-svg";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -37,103 +39,113 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <SafeAreaView
-          style={[
-            styles.container,
-            { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
-          ]}
+        <ImageBackground
+          source={require("@/assets/images/start-background.png")}
+          style={styles.bgImg}
+          resizeMode='cover'
         >
-          <StatusBar style={isDark ? "light" : "dark"} />
-          <View style={styles.mainContainer}>
-            <View style={styles.headerContainer}>
-              <Image
-                source={require("@/assets/images/logo/resq-logo-color.svg")} // Adjust the path to your image
-                style={styles.logoImage}
-                resizeMode='contain'
-              />
-              <Text style={[styles.title, { color: isDark ? "#fff" : "#000" }]}>
-                Welcome Back
-              </Text>
-              <Text
-                style={[styles.subtitle, { color: isDark ? "#ccc" : "#666" }]}
-              >
-                Sign in to continue
-              </Text>
-            </View>
-
-            <View style={styles.formContainer}>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? "#34495E" : "#fff",
-                    color: isDark ? "#fff" : "#000",
-                    borderColor: isDark ? "#455d7a" : "#ddd",
-                  },
-                ]}
-                placeholder='Email'
-                placeholderTextColor={isDark ? "#95a5a6" : "#999"}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType='email-address'
-                autoCapitalize='none'
-              />
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? "#34495E" : "#fff",
-                    color: isDark ? "#fff" : "#000",
-                    borderColor: isDark ? "#455d7a" : "#ddd",
-                  },
-                ]}
-                placeholder='Password'
-                placeholderTextColor={isDark ? "#95a5a6" : "#999"}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-
-              <TouchableOpacity
-                style={styles.forgotPassword}
-                onPress={() => router.push("/(auth)/forgot-password")}
-              >
+          <SafeAreaView
+            style={[
+              styles.container,
+              { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+            ]}
+          >
+            <StatusBar style={isDark ? "light" : "dark"} />
+            <View style={styles.mainContainer}>
+              <View style={styles.headerContainer}>
+                <Image
+                  source={require("@/assets/images/logo/resq-color.png")} // Adjust the path to your image
+                  style={styles.logoImage}
+                  resizeMode='cover'
+                />
                 <Text
-                  style={[
-                    styles.forgotPasswordText,
-                    { color: isDark ? "#7f8c8d" : "#666" },
-                  ]}
+                  style={[styles.title, { color: isDark ? "#fff" : "#000" }]}
                 >
-                  Forgot Password?
+                  Welcome Back
                 </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleLogin}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>Sign In</Text>
-              </TouchableOpacity>
-
-              <View style={styles.signupContainer}>
                 <Text
-                  style={[
-                    styles.signupText,
-                    { color: isDark ? "#ccc" : "#666" },
-                  ]}
+                  style={[styles.subtitle, { color: isDark ? "#ccc" : "#666" }]}
                 >
-                  Don't have an account?
+                  Sign in to continue
                 </Text>
-                <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-                  <Text style={styles.signupLink}>Sign Up</Text>
+              </View>
+
+              <View style={styles.formContainer}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: isDark ? "#455d7a" : "#ddd",
+                    },
+                  ]}
+                  placeholder='Email'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType='email-address'
+                  autoCapitalize='none'
+                />
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: isDark ? "#455d7a" : "#ddd",
+                    },
+                  ]}
+                  placeholder='Password'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+
+                <TouchableOpacity
+                  style={styles.forgotPassword}
+                  onPress={() => router.push("/(auth)/forgot-password")}
+                >
+                  <Text
+                    style={[
+                      styles.forgotPasswordText,
+                      { color: isDark ? "#7f8c8d" : "#666" },
+                    ]}
+                  >
+                    Forgot Password?
+                  </Text>
                 </TouchableOpacity>
               </View>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleLogin}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>Sign In</Text>
+                </TouchableOpacity>
+
+                <View style={styles.signupContainer}>
+                  <Text
+                    style={[
+                      styles.signupText,
+                      { color: isDark ? "#ccc" : "#666" },
+                    ]}
+                  >
+                    Don't have an account?
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push("/(auth)/signup")}
+                  >
+                    <Text style={styles.signupLink}>Sign Up</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </ImageBackground>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
@@ -142,6 +154,16 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  bgImg: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   mainContainer: {
     flex: 1,
@@ -158,10 +180,10 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   logoImage: {
-    width: 120,
-    height: 120,
+    width: 230,
+    height: 85,
     marginBottom: 20,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   title: {
     fontSize: 32,

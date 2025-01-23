@@ -6,7 +6,7 @@ import {
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack, SplashScreen } from "expo-router";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { View, Text } from "react-native";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -14,10 +14,10 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   const [loaded, error] = useFonts({
-    "TtNormsProNormal": require("../assets/fonts/TT Norms Pro Light.otf"),
-    "TtNormsProRegular": require("../assets/fonts/TT Norms Pro Regular.otf"),
-    "TtNormsProMedium": require("../assets/fonts/TT Norms Pro Medium.otf"),
-    "TtNormsProMediumItalic": require("../assets/fonts/TT Norms Pro Medium Italic.otf"),
+    TtNormsProNormal: require("@/assets/fonts/TT Norms Pro Light.otf"),
+    TtNormsProRegular: require("@/assets/fonts/TT Norms Pro Regular.otf"),
+    TtNormsProMedium: require("@/assets/fonts/TT Norms Pro Medium.otf"),
+    TtNormsProMediumItalic: require("@/assets/fonts/TT Norms Pro Medium Italic.otf"),
   });
 
   // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -44,15 +44,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen 
-          name="(auth)" 
-          options={{ gestureEnabled: false }} 
-        />
-        <Stack.Screen 
-          name="(app)" 
-          options={{ gestureEnabled: false }} 
-        />
+        <Stack.Screen name='index' />
+        <Stack.Screen name='(auth)' options={{ gestureEnabled: false }} />
+        <Stack.Screen name='(app)' options={{ gestureEnabled: false }} />
       </Stack>
     </ThemeProvider>
   );
