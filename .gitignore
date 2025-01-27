@@ -39,13 +39,6 @@ Thumbs.db
 .vscode/
 *.iml
 
-# Assets
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
-*.svg
 
 # Environment
 .env
