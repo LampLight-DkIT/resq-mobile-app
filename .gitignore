@@ -6,35 +6,6 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
-# React Native
-android/.gradle/
-android/app/build/
-android/build/
-android/*.keystore
-android/.idea/
-android/local.properties
-android/app/src/main/assets/index.android.bundle
-android/app/src/main/res/raw/
-android/app/src/debug/res/raw/
-android/app/src/release/res/raw/
-android/gradle.properties
-android/app/google-services.json
-android/app/debug.keystore
-
-ios/Pods/
-ios/DerivedData/
-ios/build/
-ios/*.xcodeproj/xcuserdata/
-ios/*.xcodeproj/project.xcworkspace/
-ios/*.xcodeproj/xcshareddata/
-ios/*.xcodeproj/xcshareddata/xcschemes/
-ios/*.xcodeproj/project.xcworkspace/xcuserdata/
-ios/*.xcodeproj/project.xcworkspace/xcshareddata/
-ios/*.xcodeproj/project.xcworkspace/xcshareddata/xcschemes/
-ios/fastlane/report.xml
-ios/fastlane/Preview.html
-ios/fastlane/screenshots/
-ios/fastlane/test_output/
 
 # Expo
 .expo/
