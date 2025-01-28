@@ -3,7 +3,6 @@ import {
   FlatList,
   Image,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +19,7 @@ import CountryPicker, {
 } from "react-native-country-picker-modal";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FONTS } from "@/constants/fonts";
+
 // Constants
 const RELATIONSHIPS = [
   "Parent",
@@ -42,6 +42,7 @@ interface ContactState {
   callingCode: string;
   location: string;
   profilePicture: string;
+  secretMessage: string;
 }
 
 const AddEmergencyContactScreen: React.FC = () => {
@@ -59,13 +60,13 @@ const AddEmergencyContactScreen: React.FC = () => {
     callingCode: "+44",
     location: "",
     profilePicture: "",
+    secretMessage: "",
   });
-  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [showRelationships, setShowRelationships] = useState(false);
 
   // Handlers
   const handleSave = () => {
-    // Save contact logic here
+    console.log(contact);
     router.back();
   };
 
@@ -75,7 +76,6 @@ const AddEmergencyContactScreen: React.FC = () => {
       countryCode: country.cca2,
       callingCode: "+" + country.callingCode[0],
     });
-    setCountryPickerVisible(false);
   };
 
   const renderRelationshipItem = ({ item }: { item: string }) => (
@@ -188,19 +188,22 @@ const AddEmergencyContactScreen: React.FC = () => {
         Phone Number
       </Text>
       <View style={styles.phoneInputContainer}>
-        <TouchableOpacity
-          style={[
+        <CountryPicker
+          countryCode={contact.countryCode}
+          withFilter
+          withFlag
+          withCallingCode
+          withCountryNameButton={false}
+          onSelect={onSelectCountry}
+          theme={{
+            backgroundColor: isDark ? "#2C3E50" : "#fff",
+            onBackgroundTextColor: isDark ? "#fff" : "#000",
+          }}
+          containerButtonStyle={[
             styles.countryCodeButton,
-            {
-              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-            },
+            { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
           ]}
-          onPress={() => setCountryPickerVisible(true)}
-        >
-          <Text style={[styles.text, { color: isDark ? "#fff" : "#000" }]}>
-            {contact.callingCode}
-          </Text>
-        </TouchableOpacity>
+        />
         <TextInput
           style={[
             styles.phoneInput,
@@ -233,10 +236,26 @@ const AddEmergencyContactScreen: React.FC = () => {
         placeholder='Enter location'
         placeholderTextColor={isDark ? "#95a5a6" : "#666"}
       />
+
+      <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
+        Secret Message
+      </Text>
+      <TextInput
+        style={[
+          styles.input,
+          {
+            backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
+            color: isDark ? "#fff" : "#000",
+          },
+        ]}
+        value={contact.secretMessage}
+        onChangeText={(text) => setContact({ ...contact, secretMessage: text })}
+        placeholder='Enter a secret message'
+        placeholderTextColor={isDark ? "#95a5a6" : "#666"}
+      />
     </ScrollView>
   );
 
-  // Main Render
   return (
     <View
       style={[
@@ -247,19 +266,6 @@ const AddEmergencyContactScreen: React.FC = () => {
       <StatusBar style={isDark ? "light" : "dark"} />
       {renderTopBar()}
       {renderForm()}
-
-      <CountryPicker
-        visible={countryPickerVisible}
-        onClose={() => setCountryPickerVisible(false)}
-        onSelect={onSelectCountry}
-        countryCode={contact.countryCode}
-        withFilter
-        withFlag
-        withCallingCode
-        withCallingCodeButton
-        withEmoji
-        containerButtonStyle={styles.countryPickerButton}
-      />
 
       <Modal
         visible={showRelationships}
@@ -363,13 +369,15 @@ const styles = StyleSheet.create({
   phoneInputContainer: {
     flexDirection: "row",
     marginBottom: 16,
+    alignItems: "center",
   },
   countryCodeButton: {
     height: 50,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 8,
     justifyContent: "center",
     marginRight: 8,
+    minWidth: 100,
   },
   phoneInput: {
     flex: 1,
@@ -381,16 +389,10 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: FONTS.regular,
   },
-  countryPickerButton: {
-    marginTop: 8,
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: "#f5f5f5", // Adjust as per your theme
-  },
   modalContainer: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     borderTopLeftRadius: 20,
