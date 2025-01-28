@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   Image,
   ScrollView,
   Platform,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { FONTS } from '@/constants/fonts';
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { FONTS } from "@/constants/fonts";
 
 interface EmergencyContact {
   id: string;
@@ -27,23 +27,37 @@ interface EmergencyContact {
 const EmergencyContactsScreen: React.FC = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#1a1a1a" : "#fff" },
+      ]}
+    >
+      <StatusBar style={isDark ? "light" : "dark"} />
+
       {/* Top Bar */}
-      <View style={[styles.topBar, { backgroundColor: isDark ? '#2C3E50' : '#f5f5f5' }]}>
-        <Text style={[styles.topBarTitle, { color: isDark ? '#fff' : '#000' }]}>
+      <View
+        style={[
+          styles.topBar,
+          { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+        ]}
+      >
+        <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
           Emergency Contacts
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(app)/add-emergency-contact')}
+          onPress={() => router.push("/(app)/add-emergency-contact")}
         >
-          <Ionicons name="add-circle-outline" size={24} color={isDark ? '#fff' : '#000'} />
+          <Ionicons
+            name='add-circle-outline'
+            size={24}
+            color={isDark ? "#fff" : "#000"}
+          />
         </TouchableOpacity>
       </View>
 
@@ -52,49 +66,100 @@ const EmergencyContactsScreen: React.FC = () => {
         {contacts.map((contact) => (
           <TouchableOpacity
             key={contact.id}
-            style={[styles.contactCard, { backgroundColor: isDark ? '#2C3E50' : '#f5f5f5' }]}
-            onPress={() => router.push({ pathname: '/(app)/chat', params: { contactId: contact.id } })}
+            style={[
+              styles.contactCard,
+              { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+            ]}
+            onPress={() =>
+              router.push({
+                pathname: "/(app)/chat-list-screen",
+                params: { contactId: contact.id },
+              })
+            }
           >
-            <Image 
-              source={contact.profilePicture ? { uri: contact.profilePicture } : require('@/assets/images/sample/default-avatar.png')}
+            <Image
+              source={
+                contact.profilePicture
+                  ? { uri: contact.profilePicture }
+                  : require("@/assets/images/sample/default-avatar.png")
+              }
               style={styles.profilePicture}
             />
             <View style={styles.contactInfo}>
-              <Text style={[styles.contactName, { color: isDark ? '#fff' : '#000' }]}>
+              <Text
+                style={[
+                  styles.contactName,
+                  { color: isDark ? "#fff" : "#000" },
+                ]}
+              >
                 {contact.name}
               </Text>
-              <Text style={[styles.relationshipText, { color: isDark ? '#ccc' : '#666' }]}>
+              <Text
+                style={[
+                  styles.relationshipText,
+                  { color: isDark ? "#ccc" : "#666" },
+                ]}
+              >
                 {contact.relationship}
               </Text>
               <View style={styles.phoneContainer}>
-                <Text style={[styles.countryCode, { color: isDark ? '#ccc' : '#666' }]}>
+                <Text
+                  style={[
+                    styles.countryCode,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
                   {contact.countryCode}
                 </Text>
-                <Text style={[styles.phoneNumber, { color: isDark ? '#ccc' : '#666' }]}>
+                <Text
+                  style={[
+                    styles.phoneNumber,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
                   {contact.phoneNumber}
                 </Text>
               </View>
               <View style={styles.locationContainer}>
-                <Ionicons name="location-outline" size={16} color={isDark ? '#ccc' : '#666'} />
-                <Text style={[styles.locationText, { color: isDark ? '#ccc' : '#666' }]}>
+                <Ionicons
+                  name='location-outline'
+                  size={16}
+                  color={isDark ? "#ccc" : "#666"}
+                />
+                <Text
+                  style={[
+                    styles.locationText,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
                   {contact.location}
                 </Text>
               </View>
             </View>
-            <Ionicons name="chatbubble-outline" size={24} color={isDark ? '#fff' : '#000'} />
+            <Ionicons
+              name='chatbubble-outline'
+              size={24}
+              color={isDark ? "#fff" : "#000"}
+            />
           </TouchableOpacity>
         ))}
       </ScrollView>
 
       {contacts.length === 0 && (
         <View style={styles.emptyState}>
-          <Ionicons name="people-outline" size={48} color={isDark ? '#ccc' : '#666'} />
-          <Text style={[styles.emptyStateText, { color: isDark ? '#ccc' : '#666' }]}>
+          <Ionicons
+            name='people-outline'
+            size={48}
+            color={isDark ? "#ccc" : "#666"}
+          />
+          <Text
+            style={[styles.emptyStateText, { color: isDark ? "#ccc" : "#666" }]}
+          >
             No emergency contacts yet
           </Text>
           <TouchableOpacity
-            style={[styles.emptyStateButton, { backgroundColor: '#007bff' }]}
-            onPress={() => router.push('/(app)/add-emergency-contact')}
+            style={[styles.emptyStateButton, { backgroundColor: "#007bff" }]}
+            onPress={() => router.push("/(app)/add-emergency-contact")}
           >
             <Text style={styles.emptyStateButtonText}>Add Contact</Text>
           </TouchableOpacity>
@@ -109,17 +174,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
   },
   topBarTitle: {
     fontSize: 20,
     fontFamily: FONTS.medium,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   addButton: {
     padding: 8,
@@ -129,14 +194,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   contactCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -166,8 +231,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   phoneContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
   },
   countryCode: {
@@ -180,8 +245,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
   },
   locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   locationText: {
     fontSize: 14,
@@ -190,8 +255,8 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyStateText: {
@@ -206,10 +271,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   emptyStateButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
     fontFamily: FONTS.medium,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
