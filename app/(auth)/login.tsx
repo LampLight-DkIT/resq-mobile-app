@@ -1,4 +1,5 @@
 // app/(auth)/login.tsx
+import axios from "axios";
 import React, { useState } from "react";
 import {
   Image,
@@ -13,6 +14,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ImageBackground,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -25,12 +27,27 @@ export default function LoginScreen() {
   const isDark = colorScheme === "dark";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const API_URL = "http://192.168.1.26:3000";
 
-  const handleLogin = () => {
-    // Implement login logic here
-    console.log("Login:", { email, password });
-    // Navigate to home on successful login
-    router.push("/(app)/home");
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        username: email,
+        password: password,
+      });
+  
+      if (response.status === 200) {
+        const { token, user } = response.data;
+        // Store the token securely, e.g., using AsyncStorage
+        // Navigate to home on successful login
+        console.log('Login successful:', user);
+        router.push('/(app)/home');
+      }
+    } catch (error: any) {
+      console.error('Login failed:', error.response?.data?.message || error.message);
+      Alert.alert('Login Failed', error.response?.data?.message || 'An error occurred');
+
+    }
   };
 
   return (
