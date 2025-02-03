@@ -9,7 +9,6 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import {Picker} from "@react-native-community/picker"; // Import Picker
 import { FONTS } from "@/constants/fonts";
 
 const ProfileScreen: React.FC = () => {
@@ -18,21 +17,7 @@ const ProfileScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState("+1 1234567890");
   const [dob, setDob] = useState("1990-01-01");
   const [address, setAddress] = useState("123 Main Street, Springfield, USA");
-  const [relation, setRelation] = useState("Brother"); // Default value
   const [isEditing, setIsEditing] = useState(false);
-
-  const relationOptions = [
-    "Brother",
-    "Sister",
-    "Father",
-    "Mother",
-    "Spouse",
-    "Son",
-    "Daughter",
-    "Friend",
-    "Colleague",
-    "Other",
-  ]; // List of relations
 
   const handleSave = () => {
     setIsEditing(false);
@@ -91,21 +76,6 @@ const ProfileScreen: React.FC = () => {
           editable={isEditing}
           placeholder='Date of Birth (YYYY-MM-DD)'
         />
-
-        {/* Relation Dropdown */}
-        <View style={styles.pickerContainer}>
-          <Text style={styles.pickerLabel}>Relation</Text>
-          <Picker
-            selectedValue={relation}
-            onValueChange={(itemValue: React.SetStateAction<string>) => setRelation(itemValue)}
-            enabled={isEditing}
-            style={styles.picker}
-          >
-            {relationOptions.map((option, index) => (
-              <Picker.Item key={index} label={option} value={option} />
-            ))}
-          </Picker>
-        </View>
       </View>
 
       {/* Edit/Save Button */}
@@ -205,23 +175,6 @@ const styles = StyleSheet.create({
   editableInput: {
     backgroundColor: "#fff",
     borderColor: "#007bff",
-  },
-  pickerContainer: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-  },
-  pickerLabel: {
-    fontSize: 16,
-    color: "#555",
-    fontFamily: FONTS.medium,
-    marginBottom: 5,
-  },
-  picker: {
-    height: 50,
-    fontSize: 16,
-    color: "#333",
   },
   actionButtons: {
     marginBottom: 20,
