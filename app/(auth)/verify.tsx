@@ -12,9 +12,10 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import axios from 'axios';
 
 const CODE_LENGTH = 6;
 
@@ -22,12 +23,20 @@ const VerifyScreen: React.FC = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { email: routeEmail } = useLocalSearchParams();
   
   // Create refs for each input field
   const inputRefs = useRef<Array<TextInput | null>>([]);
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    if (routeEmail) {
+      setEmail(String(routeEmail));
+    }
+  }, [routeEmail]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -63,35 +72,34 @@ const VerifyScreen: React.FC = () => {
     }
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     if (!canResend) return;
-    
-    // Implement your resend code logic here
-    console.log('Resending verification code...');
-    
-    // Reset timer and canResend state
-    setTimer(30);
-    setCanResend(false);
-    
-    Alert.alert(
-      'Code Resent',
-      'A new verification code has been sent to your email.',
-      [{ text: 'OK' }]
-    );
+    try {
+      await axios.post(`${process.env.API_URL}/auth/resend-code`, { email });
+      setTimer(30);
+      setCanResend(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to resend code');
+    }
   };
 
-  const handleVerify = () => {
-    const verificationCode = code.join('');
-    if (verificationCode.length !== CODE_LENGTH) {
-      Alert.alert('Error', 'Please enter the complete verification code');
-      return;
-    }
+  const handleVerify = async () => {
+    try {
+      const verificationCode = code.join('');
+      const response = await axios.post(`${process.env.API_URL}/auth/verify`, {
+        email: email,
+        verificationCode: verificationCode
+      });
 
-    // Implement your verification logic here
-    console.log('Verifying code:', verificationCode);
-    
-    // On successful verification, navigate to the appropriate screen
-    router.push('/(app)/home');
+      if (response.status === 200) {
+        Alert.alert('Success', 'Email verified successfully!');
+        router.push('/(auth)/login');
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        Alert.alert('Verification Failed', error.response?.data?.message || 'An error occurred');
+      }
+    }
   };
 
   return (

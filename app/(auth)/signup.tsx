@@ -16,6 +16,7 @@ import {
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import axios from "axios";
 
 const SignupScreen = () => {
   const router = useRouter();
@@ -27,6 +28,7 @@ const SignupScreen = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    phoneNumber: "",
   });
 
   const [errors, setErrors] = useState({
@@ -34,6 +36,7 @@ const SignupScreen = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    phoneNumber: "",
   });
 
   const validateForm = () => {
@@ -43,6 +46,7 @@ const SignupScreen = () => {
       email: "",
       password: "",
       confirmPassword: "",
+      phoneNumber: "",
     };
 
     // Validate full name
@@ -79,6 +83,12 @@ const SignupScreen = () => {
       isValid = false;
     }
 
+    // Validate phone number
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -89,16 +99,23 @@ const SignupScreen = () => {
     }
 
     try {
-      // Add your signup API call here
-      console.log("Signing up with:", formData);
+      const response = await axios.post(`${process.env.API_URL}/auth/register`, {
+        username: formData.email,
+        password: formData.password,
+        firstName: formData.fullName.split(" ")[0],
+        lastName: formData.fullName.split(" ")[1],
+        phoneNumber: formData.phoneNumber
+      });
 
-      // If signup is successful, navigate to verification screen
-      router.push("/(auth)/verify");
-    } catch (error) {
-      Alert.alert(
-        "Signup Failed",
-        "An error occurred during signup. Please try again."
-      );
+      if (response.status === 201) {
+        // Registration successful
+        Alert.alert('Success', 'Registration successful! Please verify your email.');
+        router.push('/(auth)/verify');
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        Alert.alert('Registration Failed', error.response?.data?.message || 'An error occurred');
+      }
     }
   };
 
@@ -240,6 +257,33 @@ const SignupScreen = () => {
                 />
                 {errors.confirmPassword ? (
                   <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                ) : null}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? "#34495E" : "#fff",
+                      color: isDark ? "#fff" : "#000",
+                      borderColor: errors.phoneNumber
+                        ? "#ff4444"
+                        : isDark
+                        ? "#455d7a"
+                        : "#ddd",
+                    },
+                  ]}
+                  placeholder='Phone Number'
+                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
+                  value={formData.phoneNumber}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, phoneNumber: text })
+                  }
+                  keyboardType='phone-pad'
+                />
+                {errors.phoneNumber ? (
+                  <Text style={styles.errorText}>{errors.phoneNumber}</Text>
                 ) : null}
               </View>
             </View>

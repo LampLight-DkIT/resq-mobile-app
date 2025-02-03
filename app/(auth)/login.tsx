@@ -20,6 +20,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { SvgUri } from "react-native-svg";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,26 +28,38 @@ export default function LoginScreen() {
   const isDark = colorScheme === "dark";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const API_URL = "http://192.168.1.26:3000";
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await axios.post(`${process.env.API_URL}/auth/login`, {
         username: email,
         password: password,
       });
   
       if (response.status === 200) {
         const { token, user } = response.data;
-        // Store the token securely, e.g., using AsyncStorage
-        // Navigate to home on successful login
+        // Store the token securely
+        await AsyncStorage.setItem('authToken', token);
         console.log('Login successful:', user);
         router.push('/(app)/home');
       }
     } catch (error: any) {
       console.error('Login failed:', error.response?.data?.message || error.message);
       Alert.alert('Login Failed', error.response?.data?.message || 'An error occurred');
+    }
+  };
 
+  const fetchProtectedData = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    try {
+      const response = await axios.get(`${process.env.API_URL}/protected-route`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // Handle the response
+    } catch (error) {
+      // Handle error
     }
   };
 
