@@ -21,13 +21,13 @@ const ProfileScreen: React.FC = () => {
   const [relations, setRelations] = useState<Relation[]>([
     {
       id: "1",
-      name: "Jane Doe",
+      name: "Sarah Thompson",
       relationship: "Spouse",
       phoneNumber: "+1 9876543210",
     },
     {
       id: "2",
-      name: "Jimmy Doe",
+      name: "Ethan Thompson",
       relationship: "Son",
       phoneNumber: "+1 5554443333",
     },
@@ -48,7 +48,7 @@ const ProfileScreen: React.FC = () => {
       ...relations,
       {
         id: Date.now().toString(),
-        name: "New Relation",
+        name: "",
         relationship: "",
         phoneNumber: "",
       },
@@ -65,7 +65,7 @@ const ProfileScreen: React.FC = () => {
       style={{ flex: 1, padding: 16 }}
     >
       <ScrollView>
-        <Text variant='headlineLarge' style={{ marginBottom: 16 }}>
+        <Text variant="headlineLarge" style={{ marginBottom: 16 }}>
           Family & Relations
         </Text>
 
@@ -73,40 +73,40 @@ const ProfileScreen: React.FC = () => {
           <Card key={relation.id} style={{ marginBottom: 10 }}>
             <Card.Content>
               <TextInput
-                label='Name'
+                label="Name"
                 value={relation.name}
                 onChangeText={(value) =>
                   handleUpdateRelation(relation.id, "name", value)
                 }
                 editable={isEditing}
-                mode='outlined'
+                mode="outlined"
               />
               <TextInput
-                label='Relationship'
+                label="Relationship"
                 value={relation.relationship}
                 onChangeText={(value) =>
                   handleUpdateRelation(relation.id, "relationship", value)
                 }
                 editable={isEditing}
-                mode='outlined'
+                mode="outlined"
                 style={{ marginTop: 8 }}
               />
               <TextInput
-                label='Phone Number'
+                label="Phone Number"
                 value={relation.phoneNumber}
                 onChangeText={(value) =>
                   handleUpdateRelation(relation.id, "phoneNumber", value)
                 }
                 editable={isEditing}
-                mode='outlined'
-                keyboardType='phone-pad'
+                mode="outlined"
+                keyboardType="phone-pad"
                 style={{ marginTop: 8 }}
               />
             </Card.Content>
             {isEditing && (
               <Card.Actions>
                 <IconButton
-                  icon='delete'
+                  icon="delete"
                   onPress={() => handleRemoveRelation(relation.id)}
                 />
               </Card.Actions>
@@ -115,7 +115,7 @@ const ProfileScreen: React.FC = () => {
         ))}
 
         <Button
-          mode='contained'
+          mode="contained"
           onPress={() => setIsEditing(!isEditing)}
           style={{ marginTop: 16 }}
         >
@@ -125,7 +125,7 @@ const ProfileScreen: React.FC = () => {
 
       {isEditing && (
         <FAB
-          icon='plus'
+          icon="plus"
           style={{ position: "absolute", right: 20, bottom: 20 }}
           onPress={handleAddRelation}
         />
