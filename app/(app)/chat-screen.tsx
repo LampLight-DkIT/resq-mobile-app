@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,23 +10,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ListRenderItem,
   Image,
-  Linking,
   ActionSheetIOS,
+  Linking,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
-import * as Location from "expo-location";
-import * as ImagePicker from "expo-image-picker";
+import { io, Socket } from 'socket.io-client';
+import { API_CONFIG } from '../../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import { Audio } from 'expo-av';
 
-// Types remain the same
+// Message type definition
 type MessageType = {
   id: string;
   text: string;
-  sender: "You" | "Angel Curtis";
+  sender: string;
+  timestamp?: string;
+  type?: 'text' | 'image' | 'location' | 'audio';
   uri?: string;
-  type?: "text" | "audio" | "location" | "photo";
   location?: {
     latitude: number;
     longitude: number;
@@ -34,58 +37,208 @@ type MessageType = {
   };
 };
 
-type RouteParams = {
-  name: string;
+type UserData = {
+  id: string;
+  username: string;
+  email: string;
 };
 
-interface ChatScreenProps {
-  route: {
-    params: RouteParams;
-  };
-}
+let socket: Socket | null = null;
 
-const ChatScreen: React.FC<ChatScreenProps> = ({ route }) => {
-  const { name } = route.params;
+const ChatScreen = () => {
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const flatListRef = useRef<FlatList<MessageType>>(null);
-
-  // State management remains the same
-  const [messages, setMessages] = useState<MessageType[]>([
-    { id: "1", text: "Hi there!", sender: "Angel Curtis", type: "text" },
-    {
-      id: "2",
-      text: "Hello! How can I help you?",
-      sender: "You",
-      type: "text",
-    },
-  ]);
-  const [inputText, setInputText] = useState<string>("");
-  const [showAttachmentOptions, setShowAttachmentOptions] =
-    useState<boolean>(false);
-  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
-  // Handle image selection from both camera and gallery
-  const handleImageSelection = async (imageUri: string) => {
-    const newMessage: MessageType = {
-      id: Date.now().toString(),
-      text: "Photo Message",
-      sender: "You",
-      type: "photo",
-      uri: imageUri,
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setShowAttachmentOptions(false);
+  const scrollToBottom = () => {
+    flatListRef.current?.scrollToEnd({ animated: true });
   };
 
-  // Camera handling
+  useEffect(() => {
+    const initializeSocket = async () => {
+      try {
+        // Get both token and user data
+        const [token, userDataString] = await Promise.all([
+          AsyncStorage.getItem('@auth_token'),
+          AsyncStorage.getItem('@user_data')
+        ]);
+
+        console.log('Retrieved token:', token ? 'Token exists' : 'No token');
+        console.log('Retrieved user data:', userDataString);
+        
+        if (!token || !userDataString) {
+          console.error('No authentication token or user data found');
+          Alert.alert('Error', 'Please log in again');
+          setIsConnecting(false);
+          return;
+        }
+
+        try {
+          // Parse user data with validation
+          const parsedUserData = JSON.parse(userDataString) as UserData;
+          if (!parsedUserData.username) {
+            throw new Error('Username is missing from user data');
+          }
+          console.log('Parsed user data:', parsedUserData);
+          setUserData(parsedUserData);
+
+          // Only initialize socket after user data is confirmed valid
+          if (!socket) {
+            console.log('Initializing socket with user:', parsedUserData.username);
+            
+            // Create socket options with auth data matching backend structure
+            const socketOptions = {
+              transports: ['websocket'],
+              autoConnect: true,
+              auth: {
+                token: token  // Just pass the JWT token string directly
+              }
+            };
+            
+            console.log('Socket connection options:', socketOptions);
+            socket = io(API_CONFIG.SOCKET_URL, socketOptions);
+
+            socket.on('connect', () => {
+              console.log('Connected to chat server successfully as:', parsedUserData.username);
+              setIsConnected(true);
+              setIsConnecting(false);
+              
+              // Include username in join event
+              socket?.emit('join', { 
+                room: 'general',
+                username: parsedUserData.username 
+              });
+            });
+
+            socket.on('message', (message: MessageType) => {
+              console.log('Received message:', message, 'Current user:', parsedUserData.username);
+              // Skip system messages
+              if (message.sender === 'System') {
+                return;
+              }
+              
+              // Ensure message has all required fields
+              const enhancedMessage = {
+                ...message,
+                sender: message.sender || 'Unknown',
+                timestamp: message.timestamp || new Date().toISOString()
+              };
+              
+              setMessages(prev => [...prev, enhancedMessage]);
+              setTimeout(scrollToBottom, 100);
+            });
+
+            socket.on('disconnect', () => {
+              console.log('Disconnected from chat server');
+              setIsConnected(false);
+            });
+
+            socket.on('connect_error', (error) => {
+              console.error('Connection error:', error.message);
+              setIsConnected(false);
+              setIsConnecting(false);
+              Alert.alert('Connection Error', 'Failed to connect to chat server. Please check your connection.');
+            });
+
+            socket.on('error', (error: any) => {
+              console.error('Socket error:', error);
+              Alert.alert('Error', 'An error occurred in the chat connection');
+            });
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          Alert.alert('Error', 'Invalid user data format. Please log in again.');
+          setIsConnecting(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Socket initialization error:', error);
+        setIsConnecting(false);
+        Alert.alert('Error', 'Failed to initialize chat connection');
+      }
+    };
+
+    initializeSocket();
+
+    return () => {
+      if (socket) {
+        console.log('Cleaning up socket connection');
+        socket.disconnect();
+        socket = null;
+        setIsConnected(false);
+      }
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (!inputText.trim() || !socket?.connected || !userData) {
+      console.log('Send message checks:', {
+        hasText: !!inputText.trim(),
+        isConnected: socket?.connected,
+        hasUserData: !!userData,
+        userData: userData
+      });
+      
+      if (!socket?.connected) {
+        Alert.alert('Error', 'Not connected to chat server');
+      } else if (!userData) {
+        Alert.alert('Error', 'User data not available');
+      }
+      return;
+    }
+
+    const message: MessageType = {
+      id: Date.now().toString(),
+      text: inputText.trim(),
+      sender: userData.username,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      console.log('Sending message as:', userData.username, message);
+      socket.emit('message', message);
+      setMessages(prev => [...prev, message]);
+      setInputText("");
+      setTimeout(scrollToBottom, 100);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message');
+    }
+  };
+
+  const handleImageSelection = async (imageUri: string) => {
+    if (!userData) return;
+    
+    const message: MessageType = {
+      id: Date.now().toString(),
+      text: "Photo Message",
+      sender: userData.username,
+      type: 'image',
+      uri: imageUri,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      socket?.emit('message', message);
+      setMessages(prev => [...prev, message]);
+      setTimeout(scrollToBottom, 100);
+    } catch (error) {
+      console.error('Error sending image:', error);
+      Alert.alert('Error', 'Failed to send image');
+    }
+  };
+
   const openCamera = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Please grant camera access to take photos."
-        );
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant camera access to take photos.');
         return;
       }
 
@@ -100,21 +253,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route }) => {
         await handleImageSelection(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to open camera");
-      console.error("Camera error:", error);
+      Alert.alert('Error', 'Failed to open camera');
     }
   };
 
-  // Gallery handling
   const openGallery = async () => {
     try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Please grant gallery access to select photos."
-        );
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant gallery access to select photos.');
         return;
       }
 
@@ -129,17 +276,120 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route }) => {
         await handleImageSelection(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to open gallery");
-      console.error("Gallery error:", error);
+      Alert.alert('Error', 'Failed to open gallery');
     }
   };
 
-  // Image picker options
+  const shareLocation = async () => {
+    if (!userData) return;
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant location access to share your location.');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High
+      });
+
+      let address = '';
+      try {
+        const [addressResult] = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        if (addressResult) {
+          address = [
+            addressResult.street,
+            addressResult.city,
+            addressResult.region,
+          ].filter(Boolean).join(', ');
+        }
+      } catch (error) {
+        console.warn('Error getting address:', error);
+      }
+
+      const message: MessageType = {
+        id: Date.now().toString(),
+        text: address || '📍 Shared Location',
+        sender: userData.username,
+        type: 'location',
+        timestamp: new Date().toISOString(),
+        location: {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          address,
+        },
+      };
+
+      socket?.emit('message', message);
+      setMessages(prev => [...prev, message]);
+      setShowAttachmentOptions(false);
+      setTimeout(scrollToBottom, 100);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get location');
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant microphone access to record audio.');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await newRecording.startAsync();
+      setRecording(newRecording);
+      setIsRecording(true);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to start recording');
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recording || !userData) return;
+
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+
+      if (uri) {
+        const message: MessageType = {
+          id: Date.now().toString(),
+          text: 'Audio Message',
+          sender: userData.username,
+          type: 'audio',
+          uri,
+          timestamp: new Date().toISOString()
+        };
+
+        socket?.emit('message', message);
+        setMessages(prev => [...prev, message]);
+      }
+
+      setRecording(null);
+      setIsRecording(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to stop recording');
+    }
+  };
+
   const handleImagePicker = () => {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ["Cancel", "Take Photo", "Choose from Library"],
+          options: ['Cancel', 'Take Photo', 'Choose from Library'],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -152,326 +402,192 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route }) => {
       );
     } else {
       Alert.alert(
-        "Select Photo",
-        "Choose an option",
+        'Select Photo',
+        'Choose an option',
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Take Photo", onPress: openCamera },
-          { text: "Choose from Library", onPress: openGallery },
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Take Photo', onPress: openCamera },
+          { text: 'Choose from Library', onPress: openGallery },
         ],
         { cancelable: true }
       );
     }
   };
 
-  // Message handling remains the same
-  const sendMessage = useCallback(() => {
-    if (inputText.trim() === "") return;
-
-    const newMessage: MessageType = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: "You",
-      type: "text",
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-    setInputText("");
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [inputText]);
-
-  // Location handling remains the same
-  const shareLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Please grant location access to share your location."
-        );
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      let address = "";
-      try {
-        const [addressResult] = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-
-        if (addressResult) {
-          address = [
-            addressResult.street,
-            addressResult.city,
-            addressResult.region,
-          ]
-            .filter(Boolean)
-            .join(", ");
-        }
-      } catch (error) {
-        console.warn("Error getting address:", error);
-      }
-
-      const newMessage: MessageType = {
-        id: Date.now().toString(),
-        text: address || "📍 Shared Location",
-        sender: "You",
-        type: "location",
-        location: {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          address,
-        },
-      };
-
-      setMessages((prev) => [...prev, newMessage]);
-      setShowAttachmentOptions(false);
-    } catch (error) {
-      Alert.alert("Error", "Failed to get location");
-      console.error("Location error:", error);
-    }
-  };
-
-  // Audio recording functions remain the same
-  const startRecording = async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Please grant microphone access to record audio."
-        );
-        return;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const newRecording = new Audio.Recording();
-      await newRecording.prepareToRecordAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      await newRecording.startAsync();
-      setRecording(newRecording);
-      setIsRecording(true);
-    } catch (error) {
-      Alert.alert("Error", "Failed to start recording");
-      console.error("Recording error:", error);
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      if (!recording) return;
-
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-
-      if (uri) {
-        const newMessage: MessageType = {
-          id: Date.now().toString(),
-          text: "🎤 Audio Message",
-          sender: "You",
-          type: "audio",
-          uri,
-        };
-        setMessages((prev) => [...prev, newMessage]);
-      }
-
-      setRecording(null);
-      setIsRecording(false);
-    } catch (error) {
-      Alert.alert("Error", "Failed to stop recording");
-      console.error("Recording error:", error);
-    }
-  };
-
-  // Open location in maps remains the same
-  const openLocation = async (latitude: number, longitude: number) => {
-    const url = Platform.select({
-      ios: `maps://app?saddr=Current+Location&daddr=${latitude},${longitude}`,
-      android: `google.navigation:q=${latitude},${longitude}`,
-    });
-
-    if (url) {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert("Error", "Maps application is not installed");
-      }
-    }
-  };
-
-  // Render message component remains the same
-  const renderMessage: ListRenderItem<MessageType> = ({ item }) => (
-    <View
-      style={[
+  const renderMessage = ({ item }: { item: MessageType }) => {
+    const isCurrentUser = userData?.username === item.sender;
+    
+    return (
+      <View style={[
         styles.messageBubble,
-        item.sender === "You"
-          ? styles.messageBubbleRight
-          : styles.messageBubbleLeft,
-      ]}
-    >
-      {item.type === "location" ? (
-        <TouchableOpacity
-          onPress={() =>
-            item.location &&
-            openLocation(item.location.latitude, item.location.longitude)
-          }
-          style={styles.locationContainer}
-        >
-          <MaterialIcons
-            name='location-on'
-            size={24}
-            color={item.sender === "You" ? "#fff" : "#000"}
-          />
-          <View>
-            <Text
-              style={
-                item.sender === "You"
-                  ? styles.messageTextRight
-                  : styles.messageTextLeft
-              }
-            >
+        isCurrentUser ? styles.sentMessage : styles.receivedMessage
+      ]}>
+        <Text style={[
+          styles.senderText,
+          isCurrentUser ? styles.sentSenderText : styles.receivedSenderText
+        ]}>
+          {item.sender}
+        </Text>
+        
+        {item.type === 'image' && item.uri && (
+          <Image source={{ uri: item.uri }} style={styles.imageMessage} />
+        )}
+        
+        {item.type === 'location' && item.location && (
+          <TouchableOpacity 
+            onPress={() => {
+              const url = Platform.select({
+                ios: `maps://app?daddr=${item.location?.latitude},${item.location?.longitude}`,
+                android: `google.navigation:q=${item.location?.latitude},${item.location?.longitude}`
+              });
+              if (url) Linking.openURL(url);
+            }}
+            style={styles.locationContainer}
+          >
+            <MaterialIcons name="location-on" size={24} color={isCurrentUser ? "#fff" : "#000"} />
+            <Text style={[
+              styles.messageText,
+              isCurrentUser ? styles.sentMessageText : styles.receivedMessageText
+            ]}>
               {item.text}
             </Text>
-            <Text
-              style={[
-                styles.locationText,
-                item.sender === "You"
-                  ? styles.messageTextRight
-                  : styles.messageTextLeft,
-              ]}
-            >
-              Tap to view in Maps
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ) : item.type === "photo" ? (
-        <View>
-          <Text
-            style={
-              item.sender === "You"
-                ? styles.messageTextRight
-                : styles.messageTextLeft
-            }
-          >
+          </TouchableOpacity>
+        )}
+        
+        {(!item.type || item.type === 'text') && (
+          <Text style={[
+            styles.messageText,
+            isCurrentUser ? styles.sentMessageText : styles.receivedMessageText
+          ]}>
             {item.text}
           </Text>
-          {item.uri && (
-            <Image source={{ uri: item.uri }} style={styles.photoMessage} />
-          )}
-        </View>
-      ) : (
-        <Text
-          style={
-            item.sender === "You"
-              ? styles.messageTextRight
-              : styles.messageTextLeft
-          }
-        >
-          {item.text}
-        </Text>
-      )}
-    </View>
-  );
+        )}
+        
+        {item.type === 'audio' && (
+          <TouchableOpacity style={styles.audioContainer}>
+            <Ionicons 
+              name="play-circle" 
+              size={24} 
+              color={isCurrentUser ? "#fff" : "#000"} 
+            />
+            <Text style={[
+              styles.messageText,
+              isCurrentUser ? styles.sentMessageText : styles.receivedMessageText
+            ]}>
+              {item.text}
+            </Text>
+          </TouchableOpacity>
+        )}
 
-  // Updated Attachment options component with separate camera and gallery options
-  const AttachmentOptions = () => (
-    <View style={styles.attachmentOptionsContainer}>
-      <TouchableOpacity
-        style={styles.attachmentOptionButton}
-        onPress={handleImagePicker}
-      >
-        <MaterialIcons name='photo-camera' size={24} color='#007bff' />
-        <Text style={styles.attachmentOptionText}>Photo</Text>
-      </TouchableOpacity>
+        {item.timestamp && (
+          <Text style={[
+            styles.timestampText,
+            isCurrentUser ? styles.sentTimestampText : styles.receivedTimestampText
+          ]}>
+            {new Date(item.timestamp).toLocaleTimeString()}
+          </Text>
+        )}
+      </View>
+    );
+  };
 
-      <TouchableOpacity
-        style={styles.attachmentOptionButton}
-        onPress={shareLocation}
-      >
-        <MaterialIcons name='location-on' size={24} color='#007bff' />
-        <Text style={styles.attachmentOptionText}>Location</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.attachmentOptionButton}>
-        <MaterialIcons name='insert-drive-file' size={24} color='#007bff' />
-        <Text style={styles.attachmentOptionText}>Document</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.attachmentOptionButton}
-        onPress={isRecording ? stopRecording : startRecording}
-      >
-        <Ionicons
-          name={isRecording ? "stop-circle" : "mic-outline"}
-          size={24}
-          color='#007bff'
-        />
-        <Text style={styles.attachmentOptionText}>
-          {isRecording ? "Recording..." : "Audio"}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  // Main render remains the same
   return (
     <SafeAreaView style={styles.container}>
+      {isConnecting ? (
+        <View style={styles.connectionStatus}>
+          <Text style={styles.connectionStatusText}>Connecting to chat server...</Text>
+        </View>
+      ) : !isConnected && (
+        <View style={[styles.connectionStatus, styles.disconnectedStatus]}>
+          <Text style={styles.connectionStatusText}>Disconnected from chat server</Text>
+        </View>
+      )}
       <FlatList
         ref={flatListRef}
         data={messages}
-        keyExtractor={(item) => item.id}
         renderItem={renderMessage}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.messageList}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
+        onContentSizeChange={scrollToBottom}
       />
-
+      
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={80}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <View style={styles.inputContainer}>
           <TouchableOpacity
-            style={styles.attachmentButton}
+            style={styles.attachButton}
             onPress={() => setShowAttachmentOptions(!showAttachmentOptions)}
+            disabled={!isConnected}
           >
-            <MaterialIcons name='attach-file' size={24} color='#007bff' />
+            <MaterialIcons 
+              name="attach-file" 
+              size={24} 
+              color={!isConnected ? '#999' : '#007AFF'} 
+            />
           </TouchableOpacity>
 
-          {showAttachmentOptions && <AttachmentOptions />}
+          {showAttachmentOptions && (
+            <View style={styles.attachmentOptions}>
+              <TouchableOpacity
+                style={styles.attachmentOption}
+                onPress={handleImagePicker}
+              >
+                <MaterialIcons name="photo-camera" size={24} color="#007AFF" />
+                <Text style={styles.attachmentOptionText}>Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.attachmentOption}
+                onPress={shareLocation}
+              >
+                <MaterialIcons name="location-on" size={24} color="#007AFF" />
+                <Text style={styles.attachmentOptionText}>Location</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.attachmentOption}
+                onPress={isRecording ? stopRecording : startRecording}
+              >
+                <Ionicons
+                  name={isRecording ? "stop-circle" : "mic"}
+                  size={24}
+                  color="#007AFF"
+                />
+                <Text style={styles.attachmentOptionText}>
+                  {isRecording ? "Stop" : "Audio"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <TextInput
-            style={styles.input}
-            placeholder='Type a message...'
+            style={[
+              styles.input,
+              !isConnected && styles.inputDisabled
+            ]}
             value={inputText}
             onChangeText={setInputText}
+            placeholder="Type a message..."
+            placeholderTextColor={!isConnected ? '#999' : '#666'}
             multiline
+            maxLength={1000}
+            editable={isConnected}
           />
-
-          <TouchableOpacity
+          <TouchableOpacity 
             style={[
               styles.sendButton,
-              !inputText.trim() && styles.sendButtonDisabled,
+              (!inputText.trim() || !isConnected) && styles.sendButtonDisabled
             ]}
             onPress={sendMessage}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || !isConnected}
           >
-            <Ionicons name='send' size={20} color='#fff' />
+            <Ionicons 
+              name="send" 
+              size={24} 
+              color={(!inputText.trim() || !isConnected) ? '#999' : 'white'} 
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -482,172 +598,147 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#f5f5f5',
+  },
+  connectionStatus: {
+    backgroundColor: '#FFE58F',
+    padding: 8,
+    alignItems: 'center',
+  },
+  disconnectedStatus: {
+    backgroundColor: '#FFA39E',
+  },
+  connectionStatusText: {
+    color: '#8C6D1F',
+    fontSize: 12,
   },
   messageList: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    padding: 10,
   },
   messageBubble: {
-    maxWidth: "70%",
-    borderRadius: 15,
+    maxWidth: '80%',
     padding: 10,
+    borderRadius: 15,
     marginVertical: 5,
   },
-  messageBubbleLeft: {
-    alignSelf: "flex-start",
-    backgroundColor: "#f0f0f0",
+  sentMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#007AFF',
   },
-  messageBubbleRight: {
-    alignSelf: "flex-end",
-    backgroundColor: "#007bff",
+  receivedMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E5E5EA',
   },
-  messageTextLeft: {
-    color: "#000",
-    fontSize: 16,
-  },
-  messageTextRight: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  photoMessage: {
-    width: 200,
-    height: 200,
-    marginTop: 5,
-    borderRadius: 10,
-  },
-  locationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  locationText: {
+  senderText: {
     fontSize: 12,
-    marginTop: 4,
-    textDecorationLine: "underline",
+    marginBottom: 2,
+  },
+  sentSenderText: {
+    color: '#ffffff',
+    opacity: 0.7,
+  },
+  receivedSenderText: {
+    color: '#888',
+  },
+  messageText: {
+    fontSize: 16,
+  },
+  sentMessageText: {
+    color: '#ffffff',
+  },
+  receivedMessageText: {
+    color: '#000000',
+  },
+  timestampText: {
+    fontSize: 10,
+    alignSelf: 'flex-end',
+    marginTop: 2,
+  },
+  sentTimestampText: {
+    color: '#ffffff',
+    opacity: 0.7,
+  },
+  receivedTimestampText: {
+    color: '#888',
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: 'white',
+    alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "#f9f9f9",
-    marginBottom: Platform.OS === "ios" ? 20 : 0,
+    borderTopColor: '#E5E5EA',
   },
   input: {
     flex: 1,
-    maxHeight: 100,
-    minHeight: 40,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: "#fff",
-    fontSize: 16,
+    paddingVertical: 8,
+    marginRight: 10,
+    maxHeight: 100,
+    backgroundColor: '#ffffff',
+  },
+  inputDisabled: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#eee',
   },
   sendButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 20,
-    padding: 10,
-    marginLeft: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#007AFF',
     width: 40,
     height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: "#b3d9ff",
+    backgroundColor: '#B8B8B8',
   },
-  attachmentButton: {
-    padding: 5,
-    marginRight: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    width: 40,
-    height: 40,
+  imageMessage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginVertical: 5,
   },
-  attachmentOptionsContainer: {
-    position: "absolute",
-    bottom: 60,
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  audioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  attachButton: {
+    padding: 10,
+  },
+  attachmentOptions: {
+    position: 'absolute',
+    bottom: 70,
     left: 10,
     right: 10,
-    flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: 'white',
     borderRadius: 10,
     padding: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
-    justifyContent: "space-around",
   },
-  attachmentOptionButton: {
-    alignItems: "center",
-    marginHorizontal: 10,
+  attachmentOption: {
+    alignItems: 'center',
     padding: 10,
   },
   attachmentOptionText: {
     fontSize: 12,
-    color: "#007bff",
+    color: '#007AFF',
     marginTop: 5,
-    textAlign: "center",
-  },
-  // Audio message styles
-  audioContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 5,
-  },
-  audioIcon: {
-    marginRight: 10,
-  },
-  // Header styles (if needed)
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    backgroundColor: "#fff",
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-    marginLeft: 10,
-  },
-  // Time stamp styles
-  timestamp: {
-    fontSize: 11,
-    color: "#666",
-    marginTop: 5,
-    alignSelf: "flex-end",
-  },
-  // Loading indicator styles
-  loadingContainer: {
-    padding: 10,
-    alignItems: "center",
-  },
-  loadingText: {
-    color: "#666",
-    fontSize: 14,
-    marginTop: 5,
-  },
-  // Error message styles
-  errorContainer: {
-    padding: 10,
-    backgroundColor: "#ffebee",
-    borderRadius: 5,
-    margin: 10,
-  },
-  errorText: {
-    color: "#c62828",
-    fontSize: 14,
   },
 });
 
-export default ChatScreen;
+export default ChatScreen; 

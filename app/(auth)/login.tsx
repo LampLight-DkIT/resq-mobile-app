@@ -1,5 +1,3 @@
-// app/(auth)/login.tsx
-import axios from "axios";
 import React, { useState } from "react";
 import {
   Image,
@@ -15,12 +13,12 @@ import {
   Keyboard,
   ImageBackground,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { SvgUri } from "react-native-svg";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import authService from '../services/authService';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -28,38 +26,31 @@ export default function LoginScreen() {
   const isDark = colorScheme === "dark";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    try {
-      const response = await axios.post(`${process.env.API_URL}/auth/login`, {
-        username: email,
-        password: password,
-      });
-  
-      if (response.status === 200) {
-        const { token, user } = response.data;
-        // Store the token securely
-        await AsyncStorage.setItem('authToken', token);
-        console.log('Login successful:', user);
-        router.push('/(app)/home');
-      }
-    } catch (error: any) {
-      console.error('Login failed:', error.response?.data?.message || error.message);
-      Alert.alert('Login Failed', error.response?.data?.message || 'An error occurred');
+    if (!email || !password) {
+      Alert.alert('Validation Error', 'Please enter both email and password');
+      return;
     }
-  };
 
-  const fetchProtectedData = async () => {
-    const token = await AsyncStorage.getItem('authToken');
+    setIsLoading(true);
     try {
-      const response = await axios.get(`${process.env.API_URL}/protected-route`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const result = await authService.login({
+        email,
+        password
       });
-      // Handle the response
-    } catch (error) {
-      // Handle error
+
+      console.log('Login successful:', result.user);
+      router.replace('/(app)/home');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert(
+        'Login Failed', 
+        error.message || 'An error occurred during login'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,7 +75,7 @@ export default function LoginScreen() {
             <View style={styles.mainContainer}>
               <View style={styles.headerContainer}>
                 <Image
-                  source={require("@/assets/images/logo/resq-color.png")} // Adjust the path to your image
+                  source={require("@/assets/images/logo/resq-color.png")}
                   style={styles.logoImage}
                   resizeMode='cover'
                 />
@@ -108,6 +99,7 @@ export default function LoginScreen() {
                       backgroundColor: isDark ? "#34495E" : "#fff",
                       color: isDark ? "#fff" : "#000",
                       borderColor: isDark ? "#455d7a" : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Email'
@@ -116,6 +108,8 @@ export default function LoginScreen() {
                   onChangeText={setEmail}
                   keyboardType='email-address'
                   autoCapitalize='none'
+                  editable={!isLoading}
+                  autoComplete="email"
                 />
                 <TextInput
                   style={[
@@ -124,6 +118,7 @@ export default function LoginScreen() {
                       backgroundColor: isDark ? "#34495E" : "#fff",
                       color: isDark ? "#fff" : "#000",
                       borderColor: isDark ? "#455d7a" : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Password'
@@ -131,16 +126,20 @@ export default function LoginScreen() {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
+                  editable={!isLoading}
+                  autoComplete="password"
                 />
 
                 <TouchableOpacity
                   style={styles.forgotPassword}
                   onPress={() => router.push("/(auth)/forgot-password")}
+                  disabled={isLoading}
                 >
                   <Text
                     style={[
                       styles.forgotPasswordText,
                       { color: isDark ? "#7f8c8d" : "#666" },
+                      isLoading && { opacity: 0.7 },
                     ]}
                   >
                     Forgot Password?
@@ -150,11 +149,24 @@ export default function LoginScreen() {
 
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={styles.button}
+                  style={[
+                    styles.button,
+                    isLoading && { opacity: 0.7 }
+                  ]}
                   onPress={handleLogin}
                   activeOpacity={0.8}
+                  disabled={isLoading}
                 >
-                  <Text style={styles.buttonText}>Sign In</Text>
+                  {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator color="#fff" />
+                      <Text style={[styles.buttonText, { marginLeft: 8 }]}>
+                        Signing In...
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.buttonText}>Sign In</Text>
+                  )}
                 </TouchableOpacity>
 
                 <View style={styles.signupContainer}>
@@ -168,8 +180,11 @@ export default function LoginScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() => router.push("/(auth)/signup")}
+                    disabled={isLoading}
                   >
-                    <Text style={styles.signupLink}>Sign Up</Text>
+                    <Text style={[styles.signupLink, isLoading && { opacity: 0.7 }]}>
+                      Sign Up
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -249,6 +264,11 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: "auto",
     paddingTop: 20,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   button: {
     width: "100%",

@@ -69,16 +69,33 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { 
-              // This ensures content starts below the status bar
               paddingTop: StatusBar.currentHeight,
             },
           }}
         >
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(app)" />
-          <Stack.Screen name="chat" options={{ headerShown: false }} />
+          {/* <Stack.Screen name="(auth)" /> */}
+          {/* <Stack.Screen name="(app)" /> */}
         </Stack>
       </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+export function AppLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="home" />
+      <Stack.Screen name="chat-screen" />
+      <Stack.Screen name="chat-list-screen" />
+      <Stack.Screen name="ChatDetailScreen" />
+      <Stack.Screen name="profile-screen" />
+      <Stack.Screen name="notification-screen" />
+      <Stack.Screen name="emergency-contacts" />
+      <Stack.Screen name="add-emergency-contact" />
+    </Stack>
   );
 }

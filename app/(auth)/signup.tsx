@@ -12,16 +12,18 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import axios from "axios";
+import authService from '../services/authService';
 
 const SignupScreen = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -98,24 +100,47 @@ const SignupScreen = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      const response = await axios.post(`${process.env.API_URL}/auth/register`, {
-        username: formData.email,
+      const names = formData.fullName.split(" ");
+      const firstName = names[0];
+      const lastName = names.slice(1).join(" ");
+      
+      // Generate username from full name: convert to lowercase, replace spaces with underscores
+      // and remove any special characters
+      const username = formData.fullName
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+      const result = await authService.register({
+        username,  // Use sanitized full name as username
+        email: formData.email,
         password: formData.password,
-        firstName: formData.fullName.split(" ")[0],
-        lastName: formData.fullName.split(" ")[1],
+        firstName,
+        lastName,
         phoneNumber: formData.phoneNumber
       });
 
-      if (response.status === 201) {
-        // Registration successful
-        Alert.alert('Success', 'Registration successful! Please verify your email.');
-        router.push('/(auth)/verify');
-      }
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        Alert.alert('Registration Failed', error.response?.data?.message || 'An error occurred');
-      }
+      console.log('Registration successful:', result);
+      Alert.alert(
+        'Success', 
+        'Registration successful! Please sign in.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(auth)/login')
+          }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      Alert.alert(
+        'Registration Failed',
+        error.message || 'An error occurred during registration'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -135,7 +160,7 @@ const SignupScreen = () => {
           <View style={styles.mainContainer}>
             <View style={styles.headerContainer}>
               <Image
-                source={require("@/assets/images/logo/resq-color.png")} // Adjust the path to your image
+                source={require("@/assets/images/logo/resq-color.png")}
                 style={styles.logoImage}
                 resizeMode='cover'
               />
@@ -162,6 +187,7 @@ const SignupScreen = () => {
                         : isDark
                         ? "#455d7a"
                         : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Full Name'
@@ -171,6 +197,7 @@ const SignupScreen = () => {
                     setFormData({ ...formData, fullName: text })
                   }
                   autoCapitalize='words'
+                  editable={!isLoading}
                 />
                 {errors.fullName ? (
                   <Text style={styles.errorText}>{errors.fullName}</Text>
@@ -189,6 +216,7 @@ const SignupScreen = () => {
                         : isDark
                         ? "#455d7a"
                         : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Email'
@@ -200,6 +228,7 @@ const SignupScreen = () => {
                   keyboardType='email-address'
                   autoCapitalize='none'
                   autoComplete='email'
+                  editable={!isLoading}
                 />
                 {errors.email ? (
                   <Text style={styles.errorText}>{errors.email}</Text>
@@ -218,6 +247,7 @@ const SignupScreen = () => {
                         : isDark
                         ? "#455d7a"
                         : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Password'
@@ -227,6 +257,7 @@ const SignupScreen = () => {
                     setFormData({ ...formData, password: text })
                   }
                   secureTextEntry
+                  editable={!isLoading}
                 />
                 {errors.password ? (
                   <Text style={styles.errorText}>{errors.password}</Text>
@@ -245,6 +276,7 @@ const SignupScreen = () => {
                         : isDark
                         ? "#455d7a"
                         : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Confirm Password'
@@ -254,6 +286,7 @@ const SignupScreen = () => {
                     setFormData({ ...formData, confirmPassword: text })
                   }
                   secureTextEntry
+                  editable={!isLoading}
                 />
                 {errors.confirmPassword ? (
                   <Text style={styles.errorText}>{errors.confirmPassword}</Text>
@@ -272,6 +305,7 @@ const SignupScreen = () => {
                         : isDark
                         ? "#455d7a"
                         : "#ddd",
+                      opacity: isLoading ? 0.7 : 1,
                     },
                   ]}
                   placeholder='Phone Number'
@@ -281,6 +315,7 @@ const SignupScreen = () => {
                     setFormData({ ...formData, phoneNumber: text })
                   }
                   keyboardType='phone-pad'
+                  editable={!isLoading}
                 />
                 {errors.phoneNumber ? (
                   <Text style={styles.errorText}>{errors.phoneNumber}</Text>
@@ -290,11 +325,24 @@ const SignupScreen = () => {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.button}
+                style={[
+                  styles.button,
+                  isLoading && { opacity: 0.7 }
+                ]}
                 onPress={handleSignup}
                 activeOpacity={0.8}
+                disabled={isLoading}
               >
-                <Text style={styles.buttonText}>Sign Up</Text>
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator color="#fff" />
+                    <Text style={[styles.buttonText, { marginLeft: 8 }]}>
+                      Creating Account...
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.buttonText}>Sign Up</Text>
+                )}
               </TouchableOpacity>
 
               <View style={styles.loginContainer}>
@@ -306,8 +354,13 @@ const SignupScreen = () => {
                 >
                   Already have an account?
                 </Text>
-                <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-                  <Text style={styles.loginLink}>Sign In</Text>
+                <TouchableOpacity 
+                  onPress={() => router.push("/(auth)/login")}
+                  disabled={isLoading}
+                >
+                  <Text style={[styles.loginLink, isLoading && { opacity: 0.7 }]}>
+                    Sign In
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -377,6 +430,11 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: "auto",
     paddingTop: 20,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   button: {
     width: "100%",
