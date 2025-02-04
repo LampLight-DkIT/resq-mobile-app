@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import {
-  FlatList,
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,19 +17,6 @@ import CountryPicker, {
 } from "react-native-country-picker-modal";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FONTS } from "@/constants/fonts";
-
-// Constants
-const RELATIONSHIPS = [
-  "Parent",
-  "Spouse",
-  "Sibling",
-  "Child",
-  "Friend",
-  "Guardian",
-  "Relative",
-  "Caregiver",
-  "Other",
-];
 
 // Types
 interface ContactState {
@@ -62,7 +47,6 @@ const AddEmergencyContactScreen: React.FC = () => {
     profilePicture: "",
     secretMessage: "",
   });
-  const [showRelationships, setShowRelationships] = useState(false);
 
   // Handlers
   const handleSave = () => {
@@ -78,184 +62,6 @@ const AddEmergencyContactScreen: React.FC = () => {
     });
   };
 
-  const renderRelationshipItem = ({ item }: { item: string }) => (
-    <TouchableOpacity
-      style={[
-        styles.relationshipItem,
-        { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
-      ]}
-      onPress={() => {
-        setContact({ ...contact, relationship: item });
-        setShowRelationships(false);
-      }}
-    >
-      <Text style={[styles.text, { color: isDark ? "#fff" : "#000" }]}>
-        {item}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  // UI Components
-  const renderTopBar = () => (
-    <View
-      style={[
-        styles.topBar,
-        { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
-      ]}
-    >
-      <TouchableOpacity onPress={() => router.back()}>
-        <Ionicons
-          name='arrow-back'
-          size={24}
-          color={isDark ? "#fff" : "#000"}
-        />
-      </TouchableOpacity>
-      <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
-        Add Emergency Contact
-      </Text>
-      <TouchableOpacity onPress={handleSave}>
-        <Text style={[styles.saveButton, { color: "#007bff" }]}>Save</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderProfilePicture = () => (
-    <TouchableOpacity style={styles.profilePictureContainer}>
-      <Image
-        source={
-          contact.profilePicture
-            ? { uri: contact.profilePicture }
-            : require("@/assets/images/sample/default-avatar.png")
-        }
-        style={styles.profilePicture}
-      />
-      <View style={styles.addPhotoButton}>
-        <Ionicons name='camera' size={20} color='#fff' />
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderForm = () => (
-    <ScrollView style={styles.form}>
-      {renderProfilePicture()}
-
-      <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-        Relationship
-      </Text>
-      <TouchableOpacity
-        style={[
-          styles.input,
-          { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
-        ]}
-        onPress={() => setShowRelationships(true)}
-      >
-        <Text
-          style={[
-            styles.text,
-            {
-              color: contact.relationship
-                ? isDark
-                  ? "#fff"
-                  : "#000"
-                : isDark
-                ? "#95a5a6"
-                : "#666",
-            },
-          ]}
-        >
-          {contact.relationship || "Select relationship"}
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-        Name
-      </Text>
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-            color: isDark ? "#fff" : "#000",
-          },
-        ]}
-        value={contact.name}
-        onChangeText={(text) => setContact({ ...contact, name: text })}
-        placeholder='Enter contact name'
-        placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-      />
-
-      <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-        Phone Number
-      </Text>
-      <View style={styles.phoneInputContainer}>
-        <CountryPicker
-          countryCode={contact.countryCode}
-          withFilter
-          withFlag
-          withCallingCode
-          withCountryNameButton={false}
-          onSelect={onSelectCountry}
-          theme={{
-            backgroundColor: isDark ? "#2C3E50" : "#fff",
-            onBackgroundTextColor: isDark ? "#fff" : "#000",
-          }}
-          containerButtonStyle={[
-            styles.countryCodeButton,
-            { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
-          ]}
-        />
-        <TextInput
-          style={[
-            styles.phoneInput,
-            {
-              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-              color: isDark ? "#fff" : "#000",
-            },
-          ]}
-          value={contact.phoneNumber}
-          onChangeText={(text) => setContact({ ...contact, phoneNumber: text })}
-          placeholder='Enter phone number'
-          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-          keyboardType='phone-pad'
-        />
-      </View>
-
-      <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-        Location
-      </Text>
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-            color: isDark ? "#fff" : "#000",
-          },
-        ]}
-        value={contact.location}
-        onChangeText={(text) => setContact({ ...contact, location: text })}
-        placeholder='Enter location'
-        placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-      />
-
-      <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-        Secret Message
-      </Text>
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-            color: isDark ? "#fff" : "#000",
-          },
-        ]}
-        value={contact.secretMessage}
-        onChangeText={(text) => setContact({ ...contact, secretMessage: text })}
-        placeholder='Enter a secret message'
-        placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-      />
-    </ScrollView>
-  );
-
   return (
     <View
       style={[
@@ -264,45 +70,142 @@ const AddEmergencyContactScreen: React.FC = () => {
       ]}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
-      {renderTopBar()}
-      {renderForm()}
 
-      <Modal
-        visible={showRelationships}
-        transparent
-        animationType='slide'
-        onRequestClose={() => setShowRelationships(false)}
+      {/* Top Bar */}
+      <View
+        style={[
+          styles.topBar,
+          { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+        ]}
       >
-        <View style={styles.modalContainer}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: isDark ? "#1a1a1a" : "#fff" },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text
-                style={[styles.modalTitle, { color: isDark ? "#fff" : "#000" }]}
-              >
-                Select Relationship
-              </Text>
-              <TouchableOpacity onPress={() => setShowRelationships(false)}>
-                <Ionicons
-                  name='close'
-                  size={24}
-                  color={isDark ? "#fff" : "#000"}
-                />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={RELATIONSHIPS}
-              renderItem={renderRelationshipItem}
-              keyExtractor={(item) => item}
-              style={styles.relationshipsList}
-            />
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons
+            name='arrow-back'
+            size={24}
+            color={isDark ? "#fff" : "#000"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
+          Add Emergency Contact
+        </Text>
+        <TouchableOpacity onPress={handleSave}>
+          <Text style={[styles.saveButton, { color: "#007bff" }]}>Save</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Form */}
+      <ScrollView style={styles.form}>
+        <TouchableOpacity style={styles.profilePictureContainer}>
+          <Image
+            source={
+              contact.profilePicture
+                ? { uri: contact.profilePicture }
+                : require("@/assets/images/sample/default-avatar.png")
+            }
+            style={styles.profilePicture}
+          />
+          <View style={styles.addPhotoButton}>
+            <Ionicons name='camera' size={20} color='#fff' />
           </View>
+        </TouchableOpacity>
+
+        {/* Relationship Input (TextInput) */}
+        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
+          Relationship
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
+              color: isDark ? "#fff" : "#000",
+            },
+          ]}
+          value={contact.relationship}
+          onChangeText={(text) =>
+            setContact({ ...contact, relationship: text })
+          }
+          placeholder='Enter relationship'
+          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
+        />
+
+        {/* Name Input */}
+        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
+          Name
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
+              color: isDark ? "#fff" : "#000",
+            },
+          ]}
+          value={contact.name}
+          onChangeText={(text) => setContact({ ...contact, name: text })}
+          placeholder='Enter contact name'
+          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
+        />
+
+        {/* Phone Number Input */}
+        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
+          Phone Number
+        </Text>
+        <View style={styles.phoneInputContainer}>
+          <CountryPicker
+            countryCode={contact.countryCode}
+            withFilter
+            withFlag
+            withCallingCode
+            withCountryNameButton={false}
+            onSelect={onSelectCountry}
+            theme={{
+              backgroundColor: isDark ? "#2C3E50" : "#fff",
+              onBackgroundTextColor: isDark ? "#fff" : "#000",
+            }}
+            containerButtonStyle={[
+              styles.countryCodeButton,
+              { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+            ]}
+          />
+          <TextInput
+            style={[
+              styles.phoneInput,
+              {
+                backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
+                color: isDark ? "#fff" : "#000",
+              },
+            ]}
+            value={contact.phoneNumber}
+            onChangeText={(text) =>
+              setContact({ ...contact, phoneNumber: text })
+            }
+            placeholder='Enter phone number'
+            placeholderTextColor={isDark ? "#95a5a6" : "#666"}
+            keyboardType='phone-pad'
+          />
         </View>
-      </Modal>
+
+        {/* Secret Message Input (Kept as requested) */}
+        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
+          Secret Message
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
+              color: isDark ? "#fff" : "#000",
+            },
+          ]}
+          value={contact.secretMessage}
+          onChangeText={(text) =>
+            setContact({ ...contact, secretMessage: text })
+          }
+          placeholder='Enter a secret message'
+          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
+        />
+      </ScrollView>
     </View>
   );
 };
@@ -385,39 +288,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     fontFamily: FONTS.regular,
-  },
-  text: {
-    fontFamily: FONTS.regular,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-    maxHeight: "70%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    fontFamily: FONTS.medium,
-  },
-  relationshipsList: {
-    flex: 1,
-  },
-  relationshipItem: {
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
   },
 });
 
