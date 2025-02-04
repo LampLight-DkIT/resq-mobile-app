@@ -1,220 +1,137 @@
 import React, { useState } from "react";
+import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import {
-  View,
   Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
   TextInput,
-  Alert,
-} from "react-native";
-import { FONTS } from "@/constants/fonts";
+  Button,
+  Card,
+  FAB,
+  IconButton,
+} from "react-native-paper";
+
+interface Relation {
+  id: string;
+  name: string;
+  relationship: string;
+  phoneNumber: string;
+}
 
 const ProfileScreen: React.FC = () => {
-  const [name, setName] = useState("John Doe");
-  const [email, setEmail] = useState("johndoe@example.com");
-  const [phoneNumber, setPhoneNumber] = useState("+1 1234567890");
-  const [dob, setDob] = useState("1990-01-01");
-  const [address, setAddress] = useState("123 Main Street, Springfield, USA");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [relations, setRelations] = useState<Relation[]>([
+    {
+      id: "1",
+      name: "Jane Doe",
+      relationship: "Spouse",
+      phoneNumber: "+1 9876543210",
+    },
+    {
+      id: "2",
+      name: "Jimmy Doe",
+      relationship: "Son",
+      phoneNumber: "+1 5554443333",
+    },
+  ]);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert("Profile Updated", "Your changes have been saved locally.");
+  const handleUpdateRelation = (
+    relationId: string,
+    field: keyof Relation,
+    value: string
+  ) => {
+    setRelations((prev) =>
+      prev.map((r) => (r.id === relationId ? { ...r, [field]: value } : r))
+    );
+  };
+
+  const handleAddRelation = () => {
+    setRelations([
+      ...relations,
+      {
+        id: Date.now().toString(),
+        name: "New Relation",
+        relationship: "",
+        phoneNumber: "",
+      },
+    ]);
+  };
+
+  const handleRemoveRelation = (relationId: string) => {
+    setRelations(relations.filter((r) => r.id !== relationId));
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
-        <View style={styles.profileImageContainer}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150" }}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.editImageIcon}>
-            <Text style={styles.editImageText}>✎</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.nameText}>{name}</Text>
-        <Text style={styles.emailText}>{email}</Text>
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, padding: 16 }}
+    >
+      <ScrollView>
+        <Text variant='headlineLarge' style={{ marginBottom: 16 }}>
+          Family & Relations
+        </Text>
 
-      {/* Editable Profile Details */}
-      <View style={styles.card}>
-        <TextInput
-          style={[styles.input, isEditing && styles.editableInput]}
-          value={name}
-          onChangeText={setName}
-          editable={isEditing}
-          placeholder='Name'
+        {relations.map((relation) => (
+          <Card key={relation.id} style={{ marginBottom: 10 }}>
+            <Card.Content>
+              <TextInput
+                label='Name'
+                value={relation.name}
+                onChangeText={(value) =>
+                  handleUpdateRelation(relation.id, "name", value)
+                }
+                editable={isEditing}
+                mode='outlined'
+              />
+              <TextInput
+                label='Relationship'
+                value={relation.relationship}
+                onChangeText={(value) =>
+                  handleUpdateRelation(relation.id, "relationship", value)
+                }
+                editable={isEditing}
+                mode='outlined'
+                style={{ marginTop: 8 }}
+              />
+              <TextInput
+                label='Phone Number'
+                value={relation.phoneNumber}
+                onChangeText={(value) =>
+                  handleUpdateRelation(relation.id, "phoneNumber", value)
+                }
+                editable={isEditing}
+                mode='outlined'
+                keyboardType='phone-pad'
+                style={{ marginTop: 8 }}
+              />
+            </Card.Content>
+            {isEditing && (
+              <Card.Actions>
+                <IconButton
+                  icon='delete'
+                  onPress={() => handleRemoveRelation(relation.id)}
+                />
+              </Card.Actions>
+            )}
+          </Card>
+        ))}
+
+        <Button
+          mode='contained'
+          onPress={() => setIsEditing(!isEditing)}
+          style={{ marginTop: 16 }}
+        >
+          {isEditing ? "Save Changes" : "Edit Profile"}
+        </Button>
+      </ScrollView>
+
+      {isEditing && (
+        <FAB
+          icon='plus'
+          style={{ position: "absolute", right: 20, bottom: 20 }}
+          onPress={handleAddRelation}
         />
-
-        <TextInput
-          style={[styles.input, isEditing && styles.editableInput]}
-          value={email}
-          onChangeText={setEmail}
-          editable={isEditing}
-          placeholder='Email'
-          keyboardType='email-address'
-        />
-
-        <TextInput
-          style={[styles.input, isEditing && styles.editableInput]}
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          editable={isEditing}
-          placeholder='Phone Number'
-          keyboardType='phone-pad'
-        />
-
-        <TextInput
-          style={[styles.input, isEditing && styles.editableInput]}
-          value={dob}
-          onChangeText={setDob}
-          editable={isEditing}
-          placeholder='Date of Birth (YYYY-MM-DD)'
-        />
-      </View>
-
-      {/* Edit/Save Button */}
-      <View style={styles.actionButtons}>
-        {isEditing ? (
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => setIsEditing(true)}
-          >
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      )}
+    </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: "#f5f5f5",
-    padding: 20,
-  },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  profileImageContainer: {
-    position: "relative",
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#007bff",
-  },
-  editImageIcon: {
-    position: "absolute",
-    bottom: 5,
-    right: 5,
-    backgroundColor: "#007bff",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  editImageText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  nameText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginTop: 10,
-    fontFamily: FONTS.medium,
-  },
-  emailText: {
-    fontSize: 16,
-    color: "#555",
-    fontFamily: FONTS.regular,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: "#f0f0f0",
-    padding: 15,
-    borderRadius: 8,
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    fontFamily: FONTS.regular,
-  },
-  editableInput: {
-    backgroundColor: "#fff",
-    borderColor: "#007bff",
-  },
-  actionButtons: {
-    marginBottom: 20,
-  },
-  editButton: {
-    backgroundColor: "#007bff",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  editButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: FONTS.medium,
-  },
-  saveButton: {
-    backgroundColor: "#28a745",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: FONTS.medium,
-  },
-  logoutButton: {
-    backgroundColor: "#dc3545",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
 
 export default ProfileScreen;
