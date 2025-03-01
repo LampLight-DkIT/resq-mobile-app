@@ -11,7 +11,14 @@ import {
 } from "react-native";
 import { FONTS } from "@/constants/fonts";
 
-const ProfileScreen: React.FC = () => {
+// Import navigation types - you would need to have react-navigation installed
+type ProfileScreenProps = {
+  navigation: {
+    navigate: (screen: string) => void;
+  };
+};
+
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const [name, setName] = useState("Simisola Kisembo");
   const [email, setEmail] = useState("simisola@example.com");
   const [phoneNumber, setPhoneNumber] = useState("+1 1234567890");
@@ -24,8 +31,21 @@ const ProfileScreen: React.FC = () => {
     Alert.alert("Profile Updated", "Your changes have been saved locally.");
   };
 
+  const navigateToSettings = () => {
+    // Navigate to the Settings screen
+    navigation.navigate("SettingsScreen");
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Settings Button */}
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={navigateToSettings}
+      >
+        <Text style={styles.settingsButtonText}>⚙️</Text>
+      </TouchableOpacity>
+
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.profileImageContainer}>
@@ -94,6 +114,14 @@ const ProfileScreen: React.FC = () => {
         )}
       </View>
 
+      {/* Settings Option */}
+      <TouchableOpacity
+        style={styles.optionButton}
+        onPress={navigateToSettings}
+      >
+        <Text style={styles.optionText}>Settings</Text>
+      </TouchableOpacity>
+
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton}>
         <Text style={styles.logoutText}>Logout</Text>
@@ -107,6 +135,26 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#f5f5f5",
     padding: 20,
+  },
+  settingsButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    backgroundColor: "#f0f0f0",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  settingsButtonText: {
+    fontSize: 20,
   },
   profileHeader: {
     alignItems: "center",
@@ -203,17 +251,30 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontFamily: FONTS.medium,
   },
+  optionButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  optionText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: FONTS.medium,
+  },
   logoutButton: {
     backgroundColor: "#dc3545",
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 20,
   },
   logoutText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    fontFamily: FONTS.medium,
   },
 });
 
