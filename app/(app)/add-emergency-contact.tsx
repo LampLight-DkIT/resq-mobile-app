@@ -86,7 +86,7 @@ const AddEmergencyContactScreen: React.FC = () => {
           />
         </TouchableOpacity>
         <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
-          Add Emergency Contact
+          Add Contact
         </Text>
         <TouchableOpacity onPress={handleSave}>
           <Text style={[styles.saveButton, { color: "#007bff" }]}>Save</Text>

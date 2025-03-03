@@ -43,8 +43,8 @@ const EmergencyContactsTab: React.FC<TabProps> = ({ isDark }: TabProps) => {
         style={[styles.addButton, { backgroundColor: "#007bff" }]}
         onPress={() => router.push("/(app)/add-emergency-contact")}
       >
-        <Ionicons name="add" size={24} color="#fff" />
-        <Text style={styles.addButtonText}>Add Emergency Contact</Text>
+        <Ionicons name='add' size={24} color='#fff' />
+        <Text style={styles.addButtonText}>Add Contact</Text>
       </TouchableOpacity>
 
       {/* Contacts List */}
@@ -58,7 +58,7 @@ const EmergencyContactsTab: React.FC<TabProps> = ({ isDark }: TabProps) => {
             ]}
             onPress={() =>
               router.push({
-                pathname: "/(app)/chat",
+                pathname: "/(app)/ChatDetailScreen",
                 params: { contactId: contact.id },
               })
             }
@@ -108,7 +108,7 @@ const EmergencyContactsTab: React.FC<TabProps> = ({ isDark }: TabProps) => {
               </View>
               <View style={styles.locationContainer}>
                 <Ionicons
-                  name="location-outline"
+                  name='location-outline'
                   size={16}
                   color={isDark ? "#ccc" : "#666"}
                 />
@@ -123,7 +123,7 @@ const EmergencyContactsTab: React.FC<TabProps> = ({ isDark }: TabProps) => {
               </View>
             </View>
             <Ionicons
-              name="chatbubble-outline"
+              name='chatbubble-outline'
               size={24}
               color={isDark ? "#fff" : "#000"}
             />
@@ -134,17 +134,14 @@ const EmergencyContactsTab: React.FC<TabProps> = ({ isDark }: TabProps) => {
       {contacts.length === 0 && (
         <View style={styles.emptyState}>
           <Ionicons
-            name="people-outline"
+            name='people-outline'
             size={48}
             color={isDark ? "#ccc" : "#666"}
           />
           <Text
-            style={[
-              styles.emptyStateText,
-              { color: isDark ? "#ccc" : "#666" },
-            ]}
+            style={[styles.emptyStateText, { color: isDark ? "#ccc" : "#666" }]}
           >
-            No emergency contacts yet
+            No contacts yet
           </Text>
           <TouchableOpacity
             style={[styles.emptyStateButton, { backgroundColor: "#007bff" }]}

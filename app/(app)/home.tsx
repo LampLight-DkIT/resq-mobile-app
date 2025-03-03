@@ -127,7 +127,7 @@ const MainTabs = () => {
         })}
       >
         <Tab.Screen name='Chats' component={ChatListScreen} />
-        <Tab.Screen name='Emergency' options={{ title: "Emergency Contacts" }}>
+        <Tab.Screen name='Emergency' options={{ title: "Contacts" }}>
           {() => <EmergencyContactsTab isDark={isDark} />}
         </Tab.Screen>
       </Tab.Navigator>

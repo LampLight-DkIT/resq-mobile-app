@@ -155,7 +155,7 @@ const EmergencyContactsScreen: React.FC = () => {
           <Text
             style={[styles.emptyStateText, { color: isDark ? "#ccc" : "#666" }]}
           >
-            No emergency contacts yet
+            No contacts yet
           </Text>
           <TouchableOpacity
             style={[styles.emptyStateButton, { backgroundColor: "#007bff" }]}
