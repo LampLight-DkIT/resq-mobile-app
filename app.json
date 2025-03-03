@@ -9,13 +9,28 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to your camera for emergency documentation.",
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to provide emergency services.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to provide emergency services.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload emergency photos.",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone for emergency audio recording."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
