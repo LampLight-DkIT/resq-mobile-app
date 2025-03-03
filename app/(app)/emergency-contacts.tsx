@@ -47,7 +47,7 @@ const EmergencyContactsScreen: React.FC = () => {
         ]}
       >
         <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
-          Emergency Contacts
+          Add Contacts
         </Text>
         <TouchableOpacity
           style={styles.addButton}
