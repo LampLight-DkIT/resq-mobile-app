@@ -1,10 +1,28 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
+    presets: ["babel-preset-expo"],
     plugins: [
-      'expo-router/babel',
-      'react-native-reanimated/plugin',
+      "react-native-reanimated/plugin",
+      [
+        "module:react-native-dotenv",
+        {
+          moduleName: "@env",
+          path: ".env",
+          safe: true,
+          allowUndefined: false,
+        },
+      ],
+      [
+        "module-resolver",
+        {
+          root: ["./"],
+          alias: {
+            "@": "./", // ✅ Universal alias for all root folders
+          },
+          extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".png", ".jpg"],
+        },
+      ],
     ],
   };
 };

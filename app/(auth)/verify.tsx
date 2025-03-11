@@ -15,6 +15,9 @@ import {
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from '@/firebaseConfig';
+
 
 const CODE_LENGTH = 6;
 
@@ -28,22 +31,16 @@ const VerifyScreen: React.FC = () => {
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timer > 0 && !canResend) {
-      interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    } else if (timer === 0 && !canResend) {
-      setCanResend(true);
-    }
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [timer, canResend]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsVerified(user?.emailVerified || false);
+    });
+    return unsubscribe;
+  }, []);
+
+  
 
   const handleCodeChange = (text: string, index: number) => {
     const newCode = [...code];
@@ -80,20 +77,15 @@ const VerifyScreen: React.FC = () => {
     );
   };
 
+
   const handleVerify = () => {
-    const verificationCode = code.join('');
-    if (verificationCode.length !== CODE_LENGTH) {
-      Alert.alert('Error', 'Please enter the complete verification code');
-      return;
+    if (!isVerified) {
+      Alert.alert("Email Not Verified", "Please verify your email first.");
+    } else {
+      router.push("/(app)/home");
     }
-
-    // Implement your verification logic here
-    console.log('Verifying code:', verificationCode);
-    
-    // On successful verification, navigate to the appropriate screen
-    router.push('/(app)/home');
   };
-
+  
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

@@ -1,42 +1,52 @@
-// app/_layout.tsx
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack, SplashScreen } from "expo-router";
-import React, { useEffect } from "react";
+import { Stack } from "expo-router";
 import { View, Text } from "react-native";
+import { useEffect, useState } from "react";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { auth } from "../firebaseConfig";
+import { onAuthStateChanged, User } from "firebase/auth"; // ✅ Import User type
+import * as SplashScreen from "expo-splash-screen";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [user, setUser] = useState<User | null>(null); // ✅ Type correctly
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     TtNormsProNormal: require("@/assets/fonts/TT Norms Pro Light.otf"),
     TtNormsProRegular: require("@/assets/fonts/TT Norms Pro Regular.otf"),
     TtNormsProMedium: require("@/assets/fonts/TT Norms Pro Medium.otf"),
     TtNormsProMediumItalic: require("@/assets/fonts/TT Norms Pro Medium Italic.otf"),
   });
 
-  // Prevent the splash screen from auto-hiding before asset loading is complete.
   useEffect(() => {
-    if (error) {
-      console.error("Error loading fonts:", error);
-    }
-  }, [error]);
+    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+      setUser(user); // ✅ No more TypeScript error
+      setAuthLoading(false);
+      console.log("Current user:", user?.uid ?? "Not logged in");
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded && !fontError) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+    if (fontError) {
+      console.error("Font loading error:", fontError);
+    }
+  }, [fontsLoaded, fontError]);
 
-  if (!loaded) {
+  if (!fontsLoaded || authLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Loading fonts...</Text>
+        <Text>{!fontsLoaded ? "Loading fonts..." : "Checking auth..."}</Text>
       </View>
     );
   }
@@ -44,9 +54,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name='index' />
-        <Stack.Screen name='(auth)' options={{ gestureEnabled: false }} />
-        <Stack.Screen name='(app)' options={{ gestureEnabled: false }} />
+        {user ? (
+          <Stack.Screen name="(app)" options={{ gestureEnabled: false }} />
+        ) : (
+          <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+        )}
       </Stack>
     </ThemeProvider>
   );

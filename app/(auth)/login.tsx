@@ -18,6 +18,9 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { SvgUri } from "react-native-svg";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { Alert } from "react-native";
+import { auth } from "@/firebaseConfig";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -26,11 +29,20 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // Implement login logic here
-    console.log("Login:", { email, password });
-    // Navigate to home on successful login
-    router.push("/(app)/home");
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      Alert.alert("Success", "Logged in successfully!");
+      
+      // Replace the navigation stack to prevent going back to login
+      router.replace("/(app)/home");
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert("Login Failed", error.message);
+      } else {
+        Alert.alert("Login Failed", "An unknown error occurred");
+      }
+    }
   };
 
   return (
@@ -121,7 +133,7 @@ export default function LoginScreen() {
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={styles.button}
-                  onPress={handleLogin}
+                  onPress={() => handleLogin(email, password)} // ✅ Call handleLogin with email & password
                   activeOpacity={0.8}
                 >
                   <Text style={styles.buttonText}>Sign In</Text>

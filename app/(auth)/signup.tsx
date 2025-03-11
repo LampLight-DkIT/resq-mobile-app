@@ -16,6 +16,8 @@ import {
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
 
 const SignupScreen = () => {
   const router = useRouter();
@@ -83,22 +85,14 @@ const SignupScreen = () => {
     return isValid;
   };
 
-  const handleSignup = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+  const handleSignup = async (email: string, password: string) => {
     try {
-      // Add your signup API call here
-      console.log("Signing up with:", formData);
-
-      // If signup is successful, navigate to verification screen
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      Alert.alert("Success", "Account created! Please check your email for verification.");
       router.push("/(auth)/verify");
     } catch (error) {
-      Alert.alert(
-        "Signup Failed",
-        "An error occurred during signup. Please try again."
-      );
+      Alert.alert("Signup Failed", "Error Message");
     }
   };
 
@@ -247,7 +241,11 @@ const SignupScreen = () => {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.button}
-                onPress={handleSignup}
+                onPress={() => {
+                  if (validateForm()) {
+                    handleSignup(formData.email, formData.password);
+                  }
+                }}
                 activeOpacity={0.8}
               >
                 <Text style={styles.buttonText}>Sign Up</Text>

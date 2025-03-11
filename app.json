@@ -29,6 +29,12 @@
         "ACCESS_COARSE_LOCATION",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "RECORD_AUDIO"
       ]
     },
@@ -54,6 +60,39 @@
     },
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "175dcd88-9939-420c-a4e4-d6f8b9992c05"
+      }
+    },
+    "owner": "adityasutar",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/175dcd88-9939-420c-a4e4-d6f8b9992c05"
+    },
+    "expo": {
+      "name": "resq-app",
+      "slug": "resq-app",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "android": {
+        "package": "com.adityasutar.resqapp",
+        "googleServicesFile": "./google-services.json"
+      },
+      "extra": {
+        "eas": {
+          "projectId": "175dcd88-9939-420c-a4e4-d6f8b9992c05"
+        }
+      },
+      "newArchEnabled": true,
+      "scheme": "Resq"
+    }
   }
 }

@@ -11,8 +11,8 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { FONTS } from "@/constants/fonts";
+import { useColorScheme } from "hooks/useColorScheme";
+import { FONTS } from "constants/fonts";
 
 interface EmergencyContact {
   id: string;

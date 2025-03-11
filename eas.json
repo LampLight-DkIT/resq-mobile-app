@@ -1,0 +1,16 @@
+{
+    "build": {
+        "production": {
+            "distribution": "store",
+            "android": {
+                "gradleCommand": ":app:assembleRelease"
+            }
+        },
+        "development": {
+            "distribution": "internal",
+            "android": {
+                "gradleCommand": ":app:assembleDebug"
+            }
+        }
+    }
+}
