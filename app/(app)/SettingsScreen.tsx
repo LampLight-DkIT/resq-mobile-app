@@ -16,7 +16,6 @@ import {
 } from "react-native";
 import { FONTS } from "@/constants/fonts";
 
-// Define types for icon options
 interface IconOption {
   id: string;
   name: string;

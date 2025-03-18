@@ -5,9 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo/resq-color.png",
-    "scheme": "myapp",
+    "scheme": "resqapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -23,13 +24,9 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.adityasutar.resqapp",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
-        "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "RECORD_AUDIO",
         "CAMERA",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -58,9 +55,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "extra": {
       "eas": {
         "projectId": "175dcd88-9939-420c-a4e4-d6f8b9992c05"
@@ -72,27 +67,6 @@
     },
     "updates": {
       "url": "https://u.expo.dev/175dcd88-9939-420c-a4e4-d6f8b9992c05"
-    },
-    "expo": {
-      "name": "resq-app",
-      "slug": "resq-app",
-      "version": "1.0.0",
-      "orientation": "portrait",
-      "platforms": [
-        "ios",
-        "android"
-      ],
-      "android": {
-        "package": "com.adityasutar.resqapp",
-        "googleServicesFile": "./google-services.json"
-      },
-      "extra": {
-        "eas": {
-          "projectId": "175dcd88-9939-420c-a4e4-d6f8b9992c05"
-        }
-      },
-      "newArchEnabled": true,
-      "scheme": "Resq"
     }
   }
 }

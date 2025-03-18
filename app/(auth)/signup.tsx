@@ -16,8 +16,12 @@ import {
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 import { auth } from "@/firebaseConfig";
+import { Ionicons } from "@expo/vector-icons"; // Make sure you have this package installed
 
 const SignupScreen = () => {
   const router = useRouter();
@@ -37,6 +41,20 @@ const SignupScreen = () => {
     password: "",
     confirmPassword: "",
   });
+
+  // State for password visibility
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  // Toggle confirm password visibility
+  const toggleConfirmPasswordVisibility = () => {
+    setConfirmPasswordVisible(!confirmPasswordVisible);
+  };
 
   const validateForm = () => {
     let isValid = true;
@@ -87,9 +105,16 @@ const SignupScreen = () => {
 
   const handleSignup = async (email: string, password: string) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       await sendEmailVerification(userCredential.user);
-      Alert.alert("Success", "Account created! Please check your email for verification.");
+      Alert.alert(
+        "Success",
+        "Account created! Please check your email for verification."
+      );
       router.push("/(auth)/verify");
     } catch (error) {
       Alert.alert("Signup Failed", "Error Message");
@@ -184,54 +209,78 @@ const SignupScreen = () => {
               </View>
 
               <View style={styles.inputGroup}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: isDark ? "#34495E" : "#fff",
-                      color: isDark ? "#fff" : "#000",
-                      borderColor: errors.password
-                        ? "#ff4444"
-                        : isDark
-                        ? "#455d7a"
-                        : "#ddd",
-                    },
-                  ]}
-                  placeholder='Password'
-                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
-                  value={formData.password}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, password: text })
-                  }
-                  secureTextEntry
-                />
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      {
+                        backgroundColor: isDark ? "#34495E" : "#fff",
+                        color: isDark ? "#fff" : "#000",
+                        borderColor: errors.password
+                          ? "#ff4444"
+                          : isDark
+                          ? "#455d7a"
+                          : "#ddd",
+                      },
+                    ]}
+                    placeholder='Password'
+                    placeholderTextColor={isDark ? "#95a5a6" : "#999"}
+                    value={formData.password}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, password: text })
+                    }
+                    secureTextEntry={!passwordVisible}
+                  />
+                  <TouchableOpacity
+                    style={styles.visibilityBtn}
+                    onPress={togglePasswordVisibility}
+                  >
+                    <Ionicons
+                      name={passwordVisible ? "eye-off" : "eye"}
+                      size={24}
+                      color={isDark ? "#95a5a6" : "#777"}
+                    />
+                  </TouchableOpacity>
+                </View>
                 {errors.password ? (
                   <Text style={styles.errorText}>{errors.password}</Text>
                 ) : null}
               </View>
 
               <View style={styles.inputGroup}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: isDark ? "#34495E" : "#fff",
-                      color: isDark ? "#fff" : "#000",
-                      borderColor: errors.confirmPassword
-                        ? "#ff4444"
-                        : isDark
-                        ? "#455d7a"
-                        : "#ddd",
-                    },
-                  ]}
-                  placeholder='Confirm Password'
-                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
-                  value={formData.confirmPassword}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, confirmPassword: text })
-                  }
-                  secureTextEntry
-                />
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      {
+                        backgroundColor: isDark ? "#34495E" : "#fff",
+                        color: isDark ? "#fff" : "#000",
+                        borderColor: errors.confirmPassword
+                          ? "#ff4444"
+                          : isDark
+                          ? "#455d7a"
+                          : "#ddd",
+                      },
+                    ]}
+                    placeholder='Confirm Password'
+                    placeholderTextColor={isDark ? "#95a5a6" : "#999"}
+                    value={formData.confirmPassword}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, confirmPassword: text })
+                    }
+                    secureTextEntry={!confirmPasswordVisible}
+                  />
+                  <TouchableOpacity
+                    style={styles.visibilityBtn}
+                    onPress={toggleConfirmPasswordVisibility}
+                  >
+                    <Ionicons
+                      name={confirmPasswordVisible ? "eye-off" : "eye"}
+                      size={24}
+                      color={isDark ? "#95a5a6" : "#777"}
+                    />
+                  </TouchableOpacity>
+                </View>
                 {errors.confirmPassword ? (
                   <Text style={styles.errorText}>{errors.confirmPassword}</Text>
                 ) : null}
@@ -319,6 +368,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: "TtNormsProRegular",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: "TtNormsProRegular",
+    paddingRight: 50, // Make space for the eye icon
+  },
+  visibilityBtn: {
+    position: "absolute",
+    right: 12,
+    height: 50,
+    justifyContent: "center",
   },
   errorText: {
     color: "#ff4444",

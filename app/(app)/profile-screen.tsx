@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,55 +8,152 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { FONTS } from "@/constants/fonts";
+import { auth } from "@/firebaseConfig";
+import { signOut, updateEmail, updateProfile } from "firebase/auth";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/firebaseConfig"; // Make sure you've exported db from firebaseConfig
+import { useRouter } from "expo-router";
+import { MaterialIcons } from "@expo/vector-icons"; // Import Material Icons for Android-style icons
 
-// Import navigation types - you would need to have react-navigation installed
-type ProfileScreenProps = {
-  navigation: {
-    navigate: (screen: string) => void;
-  };
-};
-
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  const [name, setName] = useState("Simisola Kisembo");
-  const [email, setEmail] = useState("simisola@example.com");
-  const [phoneNumber, setPhoneNumber] = useState("+1 1234567890");
-  const [dob, setDob] = useState("1990-01-01");
-  const [address, setAddress] = useState("123 Main Street, Springfield, USA");
+const ProfileScreen = () => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dob, setDob] = useState("");
+  const [address, setAddress] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert("Profile Updated", "Your changes have been saved locally.");
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setLoading(true);
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        router.replace("/(auth)/login");
+        return;
+      }
+
+      // Set basic info from auth
+      setEmail(currentUser.email || "");
+      setName(currentUser.displayName || "");
+
+      // Get additional info from Firestore
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setPhoneNumber(userData.phoneNumber || "");
+        setDob(userData.dob || "");
+        setAddress(userData.address || "");
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      Alert.alert("Error", "Failed to load profile data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        Alert.alert("Error", "You must be logged in to update your profile");
+        return;
+      }
+
+      // Update auth profile
+      await updateProfile(currentUser, {
+        displayName: name,
+      });
+
+      // Only update email if it changed
+      if (email !== currentUser.email) {
+        await updateEmail(currentUser, email);
+      }
+
+      // Update Firestore document
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      const userData = {
+        displayName: name,
+        email: email,
+        phoneNumber: phoneNumber,
+        dob: dob,
+        address: address,
+        updatedAt: new Date(),
+      };
+
+      if (userDoc.exists()) {
+        await updateDoc(userDocRef, userData);
+      } else {
+        await setDoc(userDocRef, {
+          ...userData,
+          createdAt: new Date(),
+        });
+      }
+
+      setIsEditing(false);
+      Alert.alert(
+        "Profile Updated",
+        "Your changes have been saved successfully."
+      );
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      Alert.alert("Error", "Failed to sign out");
+    }
   };
 
   const navigateToSettings = () => {
-    // Navigate to the Settings screen
-    navigation.navigate("SettingsScreen");
+    router.push("/(app)/SettingsScreen");
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size='large' color='#007bff' />
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Settings Button */}
+      {/* Settings Button with Android-style icon */}
       <TouchableOpacity
         style={styles.settingsButton}
         onPress={navigateToSettings}
       >
-        <Text style={styles.settingsButtonText}>⚙️</Text>
+        <MaterialIcons name='settings' size={24} color='#333' />
       </TouchableOpacity>
 
       {/* Profile Header */}
       <View style={styles.profileHeader}>
-        <View style={styles.profileImageContainer}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150" }}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.editImageIcon}>
-            <Text style={styles.editImageText}>✎</Text>
-          </TouchableOpacity>
-        </View>
         <Text style={styles.nameText}>{name}</Text>
         <Text style={styles.emailText}>{email}</Text>
       </View>
@@ -78,6 +175,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           editable={isEditing}
           placeholder='Email'
           keyboardType='email-address'
+          autoCapitalize='none'
         />
 
         <TextInput
@@ -95,6 +193,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onChangeText={setDob}
           editable={isEditing}
           placeholder='Date of Birth (YYYY-MM-DD)'
+        />
+
+        <TextInput
+          style={[styles.input, isEditing && styles.editableInput]}
+          value={address}
+          onChangeText={setAddress}
+          editable={isEditing}
+          placeholder='Address'
+          multiline
         />
       </View>
 
@@ -114,16 +221,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         )}
       </View>
 
-      {/* Settings Option */}
-      <TouchableOpacity
-        style={styles.optionButton}
-        onPress={navigateToSettings}
-      >
-        <Text style={styles.optionText}>Settings</Text>
-      </TouchableOpacity>
-
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -135,6 +234,18 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#f5f5f5",
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#333",
+    fontFamily: FONTS.regular,
   },
   settingsButton: {
     position: "absolute",
@@ -153,38 +264,10 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  settingsButtonText: {
-    fontSize: 20,
-  },
   profileHeader: {
     alignItems: "center",
     marginBottom: 30,
-  },
-  profileImageContainer: {
-    position: "relative",
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#007bff",
-  },
-  editImageIcon: {
-    position: "absolute",
-    bottom: 5,
-    right: 5,
-    backgroundColor: "#007bff",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  editImageText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    marginTop: 40,
   },
   nameText: {
     fontSize: 20,
@@ -246,19 +329,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: FONTS.medium,
-  },
-  optionButton: {
-    backgroundColor: "#007bff",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  optionText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

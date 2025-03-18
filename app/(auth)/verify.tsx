@@ -82,7 +82,8 @@ const VerifyScreen: React.FC = () => {
     if (!isVerified) {
       Alert.alert("Email Not Verified", "Please verify your email first.");
     } else {
-      router.push("/(app)/home");
+      // Change this line to navigate to the app directory instead of home
+      router.push("/(app)");
     }
   };
   

@@ -21,6 +21,7 @@ import { SvgUri } from "react-native-svg";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Alert } from "react-native";
 import { auth } from "@/firebaseConfig";
+import { Ionicons } from "@expo/vector-icons"; // Make sure to install expo/vector-icons if not already installed
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -28,14 +29,16 @@ export default function LoginScreen() {
   const isDark = colorScheme === "dark";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // New state for password visibility
 
   const handleLogin = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       Alert.alert("Success", "Logged in successfully!");
-      
+
       // Replace the navigation stack to prevent going back to login
-      router.replace("/(app)/home");
+      // Change from "/(app)/home" to just "/(app)"
+      router.replace("/(app)");
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert("Login Failed", error.message);
@@ -43,6 +46,11 @@ export default function LoginScreen() {
         Alert.alert("Login Failed", "An unknown error occurred");
       }
     }
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
   };
 
   return (
@@ -99,21 +107,41 @@ export default function LoginScreen() {
                   keyboardType='email-address'
                   autoCapitalize='none'
                 />
-                <TextInput
+
+                <View
                   style={[
-                    styles.input,
+                    styles.passwordContainer,
                     {
                       backgroundColor: isDark ? "#34495E" : "#fff",
-                      color: isDark ? "#fff" : "#000",
                       borderColor: isDark ? "#455d7a" : "#ddd",
                     },
                   ]}
-                  placeholder='Password'
-                  placeholderTextColor={isDark ? "#95a5a6" : "#999"}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
+                >
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      {
+                        backgroundColor: isDark ? "#34495E" : "#fff",
+                        color: isDark ? "#fff" : "#000",
+                      },
+                    ]}
+                    placeholder='Password'
+                    placeholderTextColor={isDark ? "#95a5a6" : "#999"}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!isPasswordVisible}
+                  />
+                  <TouchableOpacity
+                    style={styles.visibilityBtn}
+                    onPress={togglePasswordVisibility}
+                  >
+                    <Ionicons
+                      name={isPasswordVisible ? "eye-off" : "eye"}
+                      size={22}
+                      color={isDark ? "#95a5a6" : "#666"}
+                    />
+                  </TouchableOpacity>
+                </View>
 
                 <TouchableOpacity
                   style={styles.forgotPassword}
@@ -133,7 +161,7 @@ export default function LoginScreen() {
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={styles.button}
-                  onPress={() => handleLogin(email, password)} // ✅ Call handleLogin with email & password
+                  onPress={() => handleLogin(email, password)}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.buttonText}>Sign In</Text>
@@ -218,6 +246,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: "TtNormsProRegular",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: "TtNormsProRegular",
+  },
+  visibilityBtn: {
+    paddingHorizontal: 16,
+    height: 50,
+    justifyContent: "center",
   },
   forgotPassword: {
     alignSelf: "flex-end",

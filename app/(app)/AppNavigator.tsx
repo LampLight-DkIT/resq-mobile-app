@@ -11,20 +11,25 @@ import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import {
   useNavigation,
   NavigationProp,
   useRoute,
   RouteProp,
 } from "@react-navigation/native";
-import EmergencyContactsTab from "../components/EmergencyContactsTab";
 import { typography } from "@/styles/typography";
 import { FONTS } from "@/constants/fonts";
+
+// Import screens
 import ChatListScreen from "./chat-list-screen";
+import UserListScreen from "./UserListScreen";
+import EmergencyAlertScreen from "./EmergencyAlertScreen";
+import EmergencyContactsScreen from "./emergency-contacts";
 import NotificationScreen from "./notification-screen";
 import ProfileScreen from "./profile-screen";
-import ChatScreen from "./chat-screen";
+import ChatDetailScreen from "./ChatDetailScreen";
+import SettingsScreen from "./SettingsScreen";
 
 // Define the types for Stack Navigator
 export type RootStackParamList = {
@@ -32,6 +37,8 @@ export type RootStackParamList = {
   Notifications: undefined;
   Profile: undefined;
   Chat: { name: string };
+  ChatDetail: { userId: string; name: string; photoURL?: string };
+  Settings: undefined;
 };
 
 // Create Stack Navigator with types
@@ -40,7 +47,9 @@ const Stack = createStackNavigator<RootStackParamList>();
 // Define the types for Tab Navigator
 type TabParamList = {
   Chats: undefined;
+  Users: undefined;
   Emergency: undefined;
+  EmergencyAlert: undefined;
 };
 
 // Create Tab Navigator with types
@@ -108,8 +117,12 @@ const MainTabs = () => {
 
             if (route.name === "Chats") {
               iconName = focused ? "chatbubbles" : "chatbubbles-outline";
+            } else if (route.name === "Users") {
+              iconName = focused ? "people" : "people-outline";
             } else if (route.name === "Emergency") {
-              iconName = focused ? "alert-circle" : "alert-circle-outline";
+              iconName = focused ? "people" : "people-outline";
+            } else if (route.name === "EmergencyAlert") {
+              iconName = focused ? "warning" : "warning-outline";
             } else {
               iconName = "chatbubbles-outline"; // Fallback value
             }
@@ -127,9 +140,26 @@ const MainTabs = () => {
         })}
       >
         <Tab.Screen name='Chats' component={ChatListScreen} />
-        <Tab.Screen name='Emergency' options={{ title: "Contacts" }}>
-          {() => <EmergencyContactsTab isDark={isDark} />}
-        </Tab.Screen>
+        <Tab.Screen name='Users' component={UserListScreen} />
+        <Tab.Screen
+          name='Emergency'
+          component={EmergencyContactsScreen}
+          options={{ title: "Contacts" }}
+        />
+        <Tab.Screen
+          name='EmergencyAlert'
+          component={EmergencyAlertScreen}
+          options={{
+            title: "Alert",
+            tabBarIcon: ({ focused, color, size }) => (
+              <MaterialIcons
+                name={focused ? "warning" : "warning-amber"}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
       </Tab.Navigator>
     </SafeAreaView>
   );
@@ -154,11 +184,16 @@ const AppNavigator = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name='Chat'
-        component={ChatScreen}
+        name='ChatDetail'
+        component={ChatDetailScreen}
         options={({ route }) => ({
           title: route.params.name,
         })}
+      />
+      <Stack.Screen
+        name='Settings'
+        component={SettingsScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -191,6 +226,7 @@ const styles = StyleSheet.create({
   },
   appTitle: {
     fontFamily: FONTS.medium,
+    fontSize: 20,
   },
 });
 

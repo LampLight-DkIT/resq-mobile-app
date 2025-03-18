@@ -1,7 +1,8 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// firebaseConfig.js (rename to firebaseConfig.ts)
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 import {
   FIREBASE_API_KEY,
   FIREBASE_AUTH_DOMAIN,
@@ -12,6 +13,7 @@ import {
   FIREBASE_MEASUREMENT_ID,
 } from "@env";
 
+// Your Firebase configuration
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
   authDomain: FIREBASE_AUTH_DOMAIN,
@@ -22,15 +24,26 @@ const firebaseConfig = {
   measurementId: FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (only once)
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
 
-// Initialize Auth with AsyncStorage persistence
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage), // ✅ Correct approach
-});
+// Check if Firebase has been initialized
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+  
+  // These services will only be initialized once
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+} else {
+  app = getApps()[0]; // Use the existing initialized app
+  auth = getAuth();    // Get existing auth instance
+  db = getFirestore(); // Get existing firestore instance
+  storage = getStorage(); // Get existing storage instance
+}
 
-// Export Firebase services
-export { auth };
-export const db = getFirestore(app);
+export { auth, db, storage };
 export default app;

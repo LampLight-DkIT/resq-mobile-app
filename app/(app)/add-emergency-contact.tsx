@@ -1,65 +1,118 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   Image,
   ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import CountryPicker, {
-  Country,
-  CountryCode,
-} from "react-native-country-picker-modal";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FONTS } from "@/constants/fonts";
+import { auth } from "@/firebaseConfig";
+import {
+  getEmergencyContacts,
+  deleteEmergencyContact,
+  updateEmergencyContact,
+} from "../firebase/firebaseServices";
 
-// Types
-interface ContactState {
+interface EmergencyContact {
+  id: string;
   relationship: string;
   name: string;
   phoneNumber: string;
-  countryCode: CountryCode;
-  callingCode: string;
-  location: string;
-  profilePicture: string;
-  secretMessage: string;
+  countryCode?: string;
+  location?: string;
+  profilePicture?: string;
+  secretMessage?: string;
 }
 
-const AddEmergencyContactScreen: React.FC = () => {
-  // Hooks
+const EmergencyContactsScreen: React.FC = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  // State
-  const [contact, setContact] = useState<ContactState>({
-    relationship: "",
-    name: "",
-    phoneNumber: "",
-    countryCode: "GB",
-    callingCode: "+44",
-    location: "",
-    profilePicture: "",
-    secretMessage: "",
-  });
+  const [contacts, setContacts] = useState<EmergencyContact[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Handlers
-  const handleSave = () => {
-    console.log(contact);
-    router.back();
+  useEffect(() => {
+    fetchEmergencyContacts();
+  }, []);
+
+  const fetchEmergencyContacts = async () => {
+    try {
+      setLoading(true);
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert("Error", "No user logged in.");
+        return;
+      }
+
+      const fetchedContacts = await getEmergencyContacts(user.uid);
+      setContacts(fetchedContacts);
+    } catch (error) {
+      console.error("Error fetching emergency contacts:", error);
+      Alert.alert("Error", "Failed to load emergency contacts.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const onSelectCountry = (country: Country) => {
-    setContact({
-      ...contact,
-      countryCode: country.cca2,
-      callingCode: "+" + country.callingCode[0],
-    });
+  // ✅ Delete Contact Function
+  const handleDelete = async (id: string) => {
+    Alert.alert(
+      "Delete Contact",
+      "Are you sure you want to delete this contact?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const user = auth.currentUser;
+              if (!user) {
+                Alert.alert("Error", "No user logged in.");
+                return;
+              }
+              await deleteEmergencyContact(id, user.uid);
+              setContacts(contacts.filter((contact) => contact.id !== id));
+              Alert.alert("Success", "Contact deleted successfully.");
+            } catch (error) {
+              console.error("Error deleting contact:", error);
+              Alert.alert("Error", "Failed to delete contact.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // ✅ Update Contact Function
+  const handleUpdate = async (contact: EmergencyContact) => {
+    if (!auth.currentUser) {
+      Alert.alert("Error", "User not authenticated.");
+      return;
+    }
+
+    const userId = auth.currentUser.uid; // ✅ Get user ID from auth
+    const updatedContact = { ...contact, name: contact.name + " (Updated)" };
+
+    try {
+      await updateEmergencyContact(userId, contact.id, updatedContact); // ✅ Pass all 3 arguments
+      setContacts(
+        contacts.map((c) => (c.id === contact.id ? updatedContact : c))
+      );
+      Alert.alert("Success", "Contact updated successfully.");
+    } catch (error) {
+      console.error("Error updating contact:", error);
+      Alert.alert("Error", "Failed to update contact.");
+    }
   };
 
   return (
@@ -71,149 +124,119 @@ const AddEmergencyContactScreen: React.FC = () => {
     >
       <StatusBar style={isDark ? "light" : "dark"} />
 
-      {/* Top Bar */}
+      {/* Header */}
       <View
         style={[
           styles.topBar,
           { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
         ]}
       >
-        <TouchableOpacity onPress={() => router.back()}>
+        <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
+          Emergency Contacts
+        </Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push("/add-emergency-contact")}
+        >
           <Ionicons
-            name='arrow-back'
+            name='add-circle-outline'
             size={24}
             color={isDark ? "#fff" : "#000"}
           />
         </TouchableOpacity>
-        <Text style={[styles.topBarTitle, { color: isDark ? "#fff" : "#000" }]}>
-          Add Contact
-        </Text>
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={[styles.saveButton, { color: "#007bff" }]}>Save</Text>
-        </TouchableOpacity>
       </View>
 
-      {/* Form */}
-      <ScrollView style={styles.form}>
-        <TouchableOpacity style={styles.profilePictureContainer}>
-          <Image
-            source={
-              contact.profilePicture
-                ? { uri: contact.profilePicture }
-                : require("@/assets/images/sample/default-avatar.png")
-            }
-            style={styles.profilePicture}
-          />
-          <View style={styles.addPhotoButton}>
-            <Ionicons name='camera' size={20} color='#fff' />
-          </View>
-        </TouchableOpacity>
-
-        {/* Relationship Input (TextInput) */}
-        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-          Relationship
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-              color: isDark ? "#fff" : "#000",
-            },
-          ]}
-          value={contact.relationship}
-          onChangeText={(text) =>
-            setContact({ ...contact, relationship: text })
-          }
-          placeholder='Enter relationship'
-          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-        />
-
-        {/* Name Input */}
-        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-          Name
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-              color: isDark ? "#fff" : "#000",
-            },
-          ]}
-          value={contact.name}
-          onChangeText={(text) => setContact({ ...contact, name: text })}
-          placeholder='Enter contact name'
-          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-        />
-
-        {/* Phone Number Input */}
-        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-          Phone Number
-        </Text>
-        <View style={styles.phoneInputContainer}>
-          <CountryPicker
-            countryCode={contact.countryCode}
-            withFilter
-            withFlag
-            withCallingCode
-            withCountryNameButton={false}
-            onSelect={onSelectCountry}
-            theme={{
-              backgroundColor: isDark ? "#2C3E50" : "#fff",
-              onBackgroundTextColor: isDark ? "#fff" : "#000",
-            }}
-            containerButtonStyle={[
-              styles.countryCodeButton,
-              { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
-            ]}
-          />
-          <TextInput
-            style={[
-              styles.phoneInput,
-              {
-                backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-                color: isDark ? "#fff" : "#000",
-              },
-            ]}
-            value={contact.phoneNumber}
-            onChangeText={(text) =>
-              setContact({ ...contact, phoneNumber: text })
-            }
-            placeholder='Enter phone number'
-            placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-            keyboardType='phone-pad'
-          />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#007bff' />
+          <Text
+            style={[styles.loadingText, { color: isDark ? "#ccc" : "#666" }]}
+          >
+            Loading contacts...
+          </Text>
         </View>
+      ) : contacts.length > 0 ? (
+        <ScrollView style={styles.contactsList}>
+          {contacts.map((contact) => (
+            <View
+              key={contact.id}
+              style={[
+                styles.contactCard,
+                { backgroundColor: isDark ? "#2C3E50" : "#f5f5f5" },
+              ]}
+            >
+              <Image
+                source={
+                  contact.profilePicture
+                    ? { uri: contact.profilePicture }
+                    : require("@/assets/images/sample/default-avatar.png")
+                }
+                style={styles.profilePicture}
+              />
+              <View style={styles.contactInfo}>
+                <Text
+                  style={[
+                    styles.contactName,
+                    { color: isDark ? "#fff" : "#000" },
+                  ]}
+                >
+                  {contact.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.relationshipText,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
+                  {contact.relationship}
+                </Text>
+                <Text
+                  style={[
+                    styles.phoneNumber,
+                    { color: isDark ? "#ccc" : "#666" },
+                  ]}
+                >
+                  {contact.countryCode} {contact.phoneNumber}
+                </Text>
+              </View>
 
-        {/* Secret Message Input (Kept as requested) */}
-        <Text style={[styles.inputLabel, { color: isDark ? "#fff" : "#000" }]}>
-          Secret Message
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: isDark ? "#2C3E50" : "#f5f5f5",
-              color: isDark ? "#fff" : "#000",
-            },
-          ]}
-          value={contact.secretMessage}
-          onChangeText={(text) =>
-            setContact({ ...contact, secretMessage: text })
-          }
-          placeholder='Enter a secret message'
-          placeholderTextColor={isDark ? "#95a5a6" : "#666"}
-        />
-      </ScrollView>
+              {/* Update Button */}
+              <TouchableOpacity onPress={() => handleUpdate(contact)}>
+                <Ionicons
+                  name='pencil'
+                  size={22}
+                  color='blue'
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+
+              {/* Delete Button */}
+              <TouchableOpacity onPress={() => handleDelete(contact.id)}>
+                <Ionicons
+                  name='trash'
+                  size={22}
+                  color='red'
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={styles.emptyState}>
+          <Text
+            style={[styles.emptyStateText, { color: isDark ? "#ccc" : "#666" }]}
+          >
+            No emergency contacts yet
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -222,73 +245,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
-  topBarTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    fontFamily: FONTS.medium,
-  },
-  saveButton: {
-    fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: FONTS.medium,
-  },
-  form: {
-    flex: 1,
-    padding: 16,
-  },
-  profilePictureContainer: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  profilePicture: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  addPhotoButton: {
-    position: "absolute",
-    bottom: 0,
-    right: "35%",
-    backgroundColor: "#007bff",
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  inputLabel: {
-    fontSize: 16,
-    marginBottom: 8,
-    fontFamily: FONTS.regular,
-  },
-  input: {
-    height: 50,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    justifyContent: "center",
-    fontFamily: FONTS.regular,
-  },
-  phoneInputContainer: {
+  topBarTitle: { fontSize: 20, fontWeight: "bold" },
+  addButton: { padding: 8 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  contactsList: { flex: 1, padding: 16 },
+  loadingText: { fontSize: 16, marginTop: 8 },
+  contactCard: {
     flexDirection: "row",
-    marginBottom: 16,
     alignItems: "center",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
   },
-  countryCodeButton: {
-    height: 50,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    justifyContent: "center",
-    marginRight: 8,
-    minWidth: 100,
-  },
-  phoneInput: {
-    flex: 1,
-    height: 50,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontFamily: FONTS.regular,
-  },
+  profilePicture: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
+  contactInfo: { flex: 1 },
+  emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
+  relationshipText: { fontSize: 16, marginTop: 4 },
+  phoneNumber: { fontSize: 16 },
+  emptyStateText: { fontSize: 16 },
+  icon: { marginHorizontal: 8 },
+  contactName: { fontSize: 18, fontWeight: "bold" },
 });
 
-export default AddEmergencyContactScreen;
+export default EmergencyContactsScreen;

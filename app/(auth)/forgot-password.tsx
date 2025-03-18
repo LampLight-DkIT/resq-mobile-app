@@ -13,34 +13,50 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (email.trim() === "") {
       Alert.alert("Error", "Please enter your email address");
       return;
     }
 
-    console.log("Reset password for:", email);
-    Alert.alert(
-      "Check Your Email",
-      "If an account exists for this email, you will receive password reset instructions.",
-      [
-        {
-          text: "OK",
-          onPress: () => router.push("/(auth)/login"),
-        },
-      ]
-    );
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        "Check Your Email",
+        "If an account exists for this email, you will receive password reset instructions.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.push("/login"),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error("Password reset error:", error);
+      // Don't expose if the email exists or not for security reasons
+      Alert.alert(
+        "Check Your Email",
+        "If an account exists for this email, you will receive password reset instructions."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +75,7 @@ export default function ForgotPasswordScreen() {
           <View style={styles.mainContainer}>
             <View style={styles.headerContainer}>
               <Image
-                source={require("@/assets/images/logo/resq-color.png")} // Adjust the path to your image
+                source={require("@/assets/images/logo/resq-color.png")}
                 style={styles.logoImage}
                 resizeMode='cover'
               />
@@ -90,21 +106,30 @@ export default function ForgotPasswordScreen() {
                 keyboardType='email-address'
                 autoCapitalize='none'
                 autoComplete='email'
+                editable={!loading}
               />
             </View>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleResetPassword}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>Send Reset Link</Text>
-              </TouchableOpacity>
+              {loading ? (
+                <View style={styles.loadingButton}>
+                  <ActivityIndicator size='small' color='#ffffff' />
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleResetPassword}
+                  activeOpacity={0.8}
+                  disabled={loading}
+                >
+                  <Text style={styles.buttonText}>Send Reset Link</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => router.back()}
+                disabled={loading}
               >
                 <Text
                   style={[
@@ -188,6 +213,14 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  loadingButton: {
+    width: "100%",
+    backgroundColor: "#007bff",
+    paddingVertical: 16,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonText: {
     color: "#fff",

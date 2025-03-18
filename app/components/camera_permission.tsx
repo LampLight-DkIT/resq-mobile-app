@@ -194,7 +194,7 @@ const saveFile = async (fileUri: any, fileName: string | number) => {
   }
 };
 
-export {
+const CameraPermissions = {
   requestCameraPermission,
   requestLocationPermission,
   requestMediaLibraryPermission,
@@ -206,3 +206,5 @@ export {
   getCurrentLocation,
   saveFile,
 };
+
+export default CameraPermissions;

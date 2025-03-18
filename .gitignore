@@ -41,9 +41,9 @@ Thumbs.db
 
 
 # Environment
-.env
-.env.*.local
-.env.local
+# .env
+# .env.*.local
+# .env.local
 
 # Misc
 .git/
